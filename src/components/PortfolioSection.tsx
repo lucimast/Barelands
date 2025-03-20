@@ -99,6 +99,24 @@ export default function PortfolioSection() {
 
 function PhotoItem({ item }: { item: Photo }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // Default to assuming landscape orientation
+  const [isPortrait, setIsPortrait] = useState(false);
+
+  // Check if the image is portrait-oriented
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Use a safer approach without direct Image constructor
+      const checkImageOrientation = () => {
+        const img = document.createElement('img');
+        img.onload = () => {
+          setIsPortrait(img.height > img.width);
+        };
+        img.src = item.image;
+      };
+      
+      checkImageOrientation();
+    }
+  }, [item.image]);
 
   // Track photo view event when dialog opens
   useEffect(() => {
@@ -115,7 +133,8 @@ function PhotoItem({ item }: { item: Photo }) {
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
         <div className="group relative cursor-pointer overflow-hidden rounded-lg">
-          <div className="aspect-[3/4] w-full relative">
+          {/* Use auto aspect ratio to adapt to image orientation */}
+          <div className={`${isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'} w-full relative`}>
             <Image
               src={item.image}
               alt={item.title}
@@ -130,9 +149,9 @@ function PhotoItem({ item }: { item: Photo }) {
         </div>
       </DialogTrigger>
       {isDialogOpen && (
-        <DialogContent className="sm:max-w-3xl bg-zinc-900 border-zinc-800">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="relative aspect-[3/4] w-full">
+        <DialogContent className="sm:max-w-4xl bg-zinc-900 border-zinc-800">
+          <div className={`grid ${isPortrait ? 'md:grid-cols-[40%_60%]' : 'md:grid-cols-[60%_40%]'} gap-6`}>
+            <div className={`relative ${isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'} w-full`}>
               <Image
                 src={item.image}
                 alt={item.title}

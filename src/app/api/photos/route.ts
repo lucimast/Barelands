@@ -1,23 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { photos } from '@/lib/data';
+import { photos, Photo } from '@/lib/data';
+import fs from 'fs/promises';
+import path from 'path';
 
-export async function GET(req: NextRequest) {
+// Path to stored photo data
+const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
+
+// Load photos from JSON file
+async function loadPhotoData(): Promise<Photo[]> {
   try {
-    // Get query parameters
-    const { searchParams } = new URL(req.url);
+    const data = await fs.readFile(PHOTO_DATA_PATH, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    // If file doesn't exist or is invalid, return empty array
+    return [];
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     
-    // Filter photos by category if provided
-    let filteredPhotos = photos;
-    if (category && category !== 'All') {
-      filteredPhotos = photos.filter(photo => photo.category === category);
+    // Load photos from file
+    let storedPhotos: Photo[] = [];
+    try {
+      storedPhotos = await loadPhotoData();
+    } catch (error) {
+      console.error('Error loading stored photos:', error);
+      // Continue with just in-memory photos if there's an error
     }
     
-    // In a real application, these would be fetched from a database
-    return NextResponse.json({
-      success: true,
-      photos: filteredPhotos,
+    // Combine photos from both sources, avoiding duplicates by ID
+    const photoMap = new Map<string, Photo>();
+    
+    // Add in-memory photos first
+    photos.forEach(photo => {
+      photoMap.set(photo.id, photo);
     });
+    
+    // Add stored photos, potentially overriding in-memory ones
+    storedPhotos.forEach(photo => {
+      photoMap.set(photo.id, photo);
+    });
+    
+    // Convert back to array
+    let allPhotos = Array.from(photoMap.values());
+    
+    // Apply category filter if provided
+    if (category && category !== 'All') {
+      allPhotos = allPhotos.filter(photo => photo.category === category);
+    }
+    
+    // Sort by dateAdded, newest first
+    allPhotos.sort((a, b) => 
+      new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
+    );
+    
+    return NextResponse.json(allPhotos);
   } catch (error) {
     console.error('Error fetching photos:', error);
     return NextResponse.json(

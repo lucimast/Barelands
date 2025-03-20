@@ -18,9 +18,10 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center">
           {/* Logo/Name */}
           <div className="mb-6 md:mb-0">
-            <Link href="/" className="text-xl font-medium tracking-tight text-white">
-              Alex Morgan
-              <span className="block text-xs text-zinc-400 mt-0.5">
+            <Link href="/" className="text-xl font-medium tracking-tight text-white flex items-center">
+              <FiInstagram className="mr-2 h-5 w-5" />
+              @mybarelands
+              <span className="block text-xs text-zinc-400 mt-0.5 ml-2">
                 Landscape Photographer
               </span>
             </Link>
@@ -48,7 +49,7 @@ export default function Footer() {
           {/* Social Links */}
           <div className="flex space-x-4">
             <a
-              href="https://instagram.com"
+              href="https://instagram.com/mybarelands"
               target="_blank"
               rel="noopener noreferrer"
               className="text-zinc-400 hover:text-white transition-colors"
@@ -79,7 +80,7 @@ export default function Footer() {
 
         <div className="border-t border-zinc-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-zinc-500 text-sm">
-            &copy; {currentYear} Alex Morgan Photography. All rights reserved.
+            &copy; {currentYear} Barelands Photography. All rights reserved.
           </p>
           <div className="mt-4 md:mt-0 flex space-x-6">
             <Link href="/privacy" className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors">

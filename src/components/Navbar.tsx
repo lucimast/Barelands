@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { IoMenuOutline, IoCloseOutline } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
+import { FiInstagram } from "react-icons/fi";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -37,9 +38,10 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link href="/">
-          <h1 className="text-xl md:text-2xl font-medium tracking-tight">
-            Alex Morgan
-            <span className="block text-xs text-zinc-400 mt-0.5">
+          <h1 className="text-xl md:text-2xl font-medium tracking-tight flex items-center">
+            <FiInstagram className="mr-2 h-5 w-5" />
+            @mybarelands
+            <span className="block text-xs text-zinc-400 mt-0.5 ml-2">
               Landscape Photographer
             </span>
           </h1>
@@ -49,8 +51,8 @@ export default function Navbar() {
         <nav className="hidden md:flex space-x-8 items-center">
           <NavLink href="/#about">Who I Am</NavLink>
           <NavLink href="/#portfolio">Portfolio</NavLink>
-          <NavLink href="/#news">News</NavLink>
-          <NavLink href="/#prints">Buy a Print</NavLink>
+          <NavLink href="/news">News</NavLink>
+          <NavLink href="/prints">Buy a Print</NavLink>
           <NavLink href="/#contact">Contact</NavLink>
         </nav>
 
@@ -94,13 +96,13 @@ export default function Navbar() {
                 Portfolio
               </MobileNavLink>
               <MobileNavLink
-                href="/#news"
+                href="/news"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 News
               </MobileNavLink>
               <MobileNavLink
-                href="/#prints"
+                href="/prints"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Buy a Print

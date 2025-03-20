@@ -1,4 +1,5 @@
 import { type AnalyticsProps } from '@vercel/analytics/react';
+import { track as vercelTrack } from '@vercel/analytics';
 
 // This is a wrapper around Vercel Analytics to provide additional functionality
 // and centralize analytics-related code
@@ -13,8 +14,11 @@ export type AnalyticsEventName =
   | 'photo_upload'
   | 'photo_delete';
 
+// Define the type based on what Vercel Analytics accepts
+type AllowedValueTypes = string | number | boolean | null;
+
 export type AnalyticsEventData = {
-  [key: string]: string | number | boolean | null | undefined;
+  [key: string]: AllowedValueTypes;
 };
 
 // Shared analytics function to track events
@@ -31,8 +35,7 @@ export function trackEvent(
 
   // In production, track with Vercel Analytics
   try {
-    const { track } = require('@vercel/analytics');
-    track(eventName, eventData);
+    vercelTrack(eventName, eventData);
   } catch (error) {
     console.error('Error tracking event:', error);
   }

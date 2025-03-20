@@ -30,11 +30,6 @@ export default function AdminLayout({
     }
   }, [status, pathname, router]);
 
-  // Don't apply layout to login page
-  if (pathname === "/admin") {
-    return <>{children}</>;
-  }
-
   // Set active tab based on pathname
   useEffect(() => {
     const currentTab = adminNavItems.find((item) => 
@@ -45,6 +40,11 @@ export default function AdminLayout({
       setActiveTab(currentTab);
     }
   }, [pathname]);
+
+  // Don't apply layout to login page
+  if (pathname === "/admin") {
+    return <>{children}</>;
+  }
 
   // Show loading or redirect if not authenticated
   if (status === "loading") {

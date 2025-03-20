@@ -1,4 +1,5 @@
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -30,6 +31,10 @@ export async function saveImageToLocal(
     // Determine the folder path
     const publicDir = path.join(process.cwd(), 'public');
     const uploadDir = path.join(publicDir, folder);
+    
+    // Ensure the upload directory exists
+    await createUploadFolderIfNeeded(uploadDir);
+    
     const filePath = path.join(uploadDir, fileName);
     
     // Write the file
@@ -47,16 +52,16 @@ export function generateImageUrl(fileName: string, folder: string = 'uploads'): 
   return `/${folder}/${fileName}`;
 }
 
-export async function createUploadFolderIfNeeded(): Promise<void> {
-  // This would create the uploads folder if it doesn't exist
-  // For simplicity, we'll assume it exists in this demo
-  // In production, you would check if the folder exists and create it if needed
+export async function createUploadFolderIfNeeded(uploadDir?: string): Promise<void> {
+  const dirPath = uploadDir || path.join(process.cwd(), 'public', 'uploads');
   
-  // const fs = require('fs');
-  // const publicDir = path.join(process.cwd(), 'public');
-  // const uploadDir = path.join(publicDir, 'uploads');
-  
-  // if (!fs.existsSync(uploadDir)) {
-  //   fs.mkdirSync(uploadDir, { recursive: true });
-  // }
+  if (!existsSync(dirPath)) {
+    try {
+      await mkdir(dirPath, { recursive: true });
+      console.log(`Created uploads directory at ${dirPath}`);
+    } catch (error) {
+      console.error('Error creating uploads directory:', error);
+      throw new Error('Failed to create uploads directory');
+    }
+  }
 } 

@@ -19,11 +19,14 @@ export default function AboutSection() {
           >
             <div className="relative aspect-[4/5] w-full max-w-md mx-auto md:max-w-none overflow-hidden rounded-lg">
               <Image
-                src="/tuscany.jpg"
-                alt={`${aboutInfo.name} - ${aboutInfo.title}`}
+                src="/uploads/974baeb1-25ba-44f1-8da8-b134ab07f10c.jpeg"
+                alt="Skogafoss, Iceland - Beautiful waterfall landscape"
                 fill
                 className="object-cover"
               />
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-sm p-2">
+                <p className="font-medium">Skogafoss, Iceland</p>
+              </div>
             </div>
           </motion.div>
 

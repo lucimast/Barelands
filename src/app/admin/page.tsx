@@ -1,115 +1,102 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import Link from "next/link";
-import { trackEvent } from "@/lib/analytics";
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';
+import AdminHeader from '@/components/AdminHeader';
+import PhotoUploadForm from '@/components/PhotoUploadForm';
+import AdminPhotoGallery from '@/components/AdminPhotoGallery';
+import { Photo } from '@/lib/data';
 
-export default function AdminLogin() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('upload');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  // Check authentication
+  if (status === 'loading') {
+    return <div className="container mx-auto p-6">Loading...</div>;
+  }
 
-    try {
-      // Track login attempt (don't include password!)
-      trackEvent('admin_login', { email });
+  if (status === 'unauthenticated') {
+    redirect('/login');
+  }
 
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        toast.error("Invalid credentials. Please try again.");
-      } else {
-        toast.success("Login successful!");
-        router.push("/admin/dashboard");
+  useEffect(() => {
+    // Fetch photos when component mounts
+    const fetchPhotos = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/photos');
+        if (!response.ok) {
+          throw new Error('Failed to fetch photos');
+        }
+        const data = await response.json();
+        setPhotos(data);
+      } catch (error) {
+        console.error('Error fetching photos:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      toast.error("An error occurred. Please try again.");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    fetchPhotos();
+  }, []);
+
+  // Handle successful photo upload
+  const handlePhotoAdded = (newPhoto: Photo) => {
+    setPhotos(prevPhotos => [newPhoto, ...prevPhotos]);
   };
 
   return (
-    <div className="min-h-screen bg-zinc-900 flex flex-col items-center justify-center p-4">
-      <Link href="/" className="absolute top-8 left-8 text-zinc-400 hover:text-white transition-colors flex items-center gap-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        Back to site
-      </Link>
-
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block">
-            <h1 className="text-2xl font-medium tracking-tight text-white">
-              Barelands
-              <span className="block text-xs text-zinc-400 mt-0.5">
-                Landscape Photography
-              </span>
-            </h1>
-          </Link>
-        </div>
-
-        <div className="bg-zinc-800 rounded-lg p-8 shadow-lg">
-          <h2 className="text-xl font-medium text-white mb-6">Admin Login</h2>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-zinc-300">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-zinc-700 border-zinc-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-zinc-300">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="bg-zinc-700 border-zinc-600"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full bg-white hover:bg-zinc-200 text-zinc-900 mt-2"
-              disabled={isLoading}
+    <div className="min-h-screen bg-gray-50">
+      <AdminHeader />
+      
+      <main className="container mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+        
+        <div className="mb-6">
+          <div className="flex border-b border-gray-200">
+            <button
+              className={`px-4 py-2 font-medium ${
+                activeTab === 'upload'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('upload')}
             >
-              {isLoading ? "Logging in..." : "Login"}
-            </Button>
-          </form>
-
-          <p className="text-zinc-400 text-xs mt-6 text-center">
-            For security purposes, contact the site administrator for login credentials.
-          </p>
+              Upload Photo
+            </button>
+            <button
+              className={`px-4 py-2 font-medium ${
+                activeTab === 'manage'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('manage')}
+            >
+              Manage Photos
+            </button>
+          </div>
         </div>
-      </div>
+
+        {activeTab === 'upload' ? (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Upload New Photo</h2>
+            <PhotoUploadForm onPhotoAdded={handlePhotoAdded} />
+          </div>
+        ) : (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Manage Photos</h2>
+            {isLoading ? (
+              <p>Loading photos...</p>
+            ) : (
+              <AdminPhotoGallery photos={photos} />
+            )}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

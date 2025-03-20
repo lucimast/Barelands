@@ -1,13 +1,19 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcrypt";
+import { AuthOptions } from "next-auth";
 
 // In a production environment, these credentials would be stored in a database
 // This is just a temporary solution
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@barelands.vip";
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || "$2b$10$vQcjA2ldvcvUU7.QW9HXMObUJa3SyDQg/I8pZtkWMkN0GhZO6gpNO"; // hashed version of "changeme123" - you should change this
+const ADMIN_EMAIL = "admin@barelands.vip";
+// HARDCODED PASSWORD HASH for 'secure123' - bypassing environment variable issues
+const ADMIN_PASSWORD_HASH = "$2b$10$LwtmZiBql13DJYx6Qez5yuKj7IpVFeswMi79IcLXLBJhSk6Kmxb.2";
 
-const handler = NextAuth({
+// Debug logs
+console.log('Auth Config - Email:', ADMIN_EMAIL);
+console.log('Auth Config - Full Hash:', ADMIN_PASSWORD_HASH);
+
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -17,22 +23,36 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('Missing credentials');
           return null;
         }
         
         try {
           // In a real world scenario, you would fetch this from your database
+          console.log('Login attempt - Email:', credentials.email);
+          
           if (credentials.email === ADMIN_EMAIL) {
-            const passwordMatch = await compare(credentials.password, ADMIN_PASSWORD_HASH);
+            console.log('Email matched, checking password...');
+            console.log('Password provided:', credentials.password);
             
-            if (passwordMatch) {
-              return {
-                id: "1",
-                email: ADMIN_EMAIL,
-                name: "Admin",
-              };
+            try {
+              const passwordMatch = await compare(credentials.password, ADMIN_PASSWORD_HASH);
+              console.log('Password match result:', passwordMatch);
+              
+              if (passwordMatch) {
+                console.log('Authentication successful');
+                return {
+                  id: "1",
+                  email: ADMIN_EMAIL,
+                  name: "Admin",
+                };
+              }
+            } catch (bcryptError) {
+              console.error("Bcrypt error:", bcryptError);
+              return null;
             }
           }
+          console.log('Authentication failed');
           return null;
         } catch (error) {
           console.error("Auth error:", error);
@@ -65,6 +85,8 @@ const handler = NextAuth({
       return session;
     },
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST }; 

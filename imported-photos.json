@@ -1,0 +1,222 @@
+[
+  {
+    "id": "4c5239b2-a9be-4bca-9f06-840dbd6fc05e",
+    "title": "Cuernos Del Paine Beach",
+    "category": "Mountains",
+    "image": "/uploads/515980e8-cccc-43eb-bcd4-98f7a0e95179.jpg",
+    "description": "Beautiful landscape photograph of Cuernos Del Paine Beach",
+    "location": "Norway",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.783Z"
+  },
+  {
+    "id": "5d7766d0-4898-49ff-8e1f-1d68ffde74d0",
+    "title": "Nara Lanterns",
+    "category": "Night Sky",
+    "image": "/uploads/0c699b59-09d5-498b-96b1-fee1d146d1a8.jpg",
+    "description": "Beautiful landscape photograph of Nara Lanterns",
+    "location": "Dolomites, Italy",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.784Z"
+  },
+  {
+    "id": "7cb6c094-084f-4246-970a-4d8303d1175f",
+    "title": "Passo Giau Vertical ",
+    "category": "Deserts",
+    "image": "/uploads/4ac52a48-ce6b-4c41-be3d-8175fac59611.jpg",
+    "description": "Beautiful landscape photograph of Passo Giau Vertical ",
+    "location": "Japan",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.784Z"
+  },
+  {
+    "id": "6d215144-8604-4912-aea8-2560a2c71611",
+    "title": "Iguazu BR Side",
+    "category": "Mountains",
+    "image": "/uploads/a32a74b2-3425-478d-b77f-709994739d48.jpg",
+    "description": "Beautiful landscape photograph of Iguazu BR Side",
+    "location": "Dolomites, Italy",
+    "featured": true,
+    "dateAdded": "2025-03-20T09:56:24.784Z"
+  },
+  {
+    "id": "c5e9bd41-bb7a-4d25-814d-5f36b7a6018a",
+    "title": "Nas Final",
+    "category": "Deserts",
+    "image": "/uploads/ac1d9140-5825-440b-8a0c-221d94a247fa.jpg",
+    "description": "Beautiful landscape photograph of Nas Final",
+    "location": "Patagonia, Chile",
+    "featured": true,
+    "dateAdded": "2025-03-20T09:56:24.784Z"
+  },
+  {
+    "id": "78ffb2b0-3027-409d-b1fd-6145a2b752fa",
+    "title": "Windmills Leros Night",
+    "category": "Oceans",
+    "image": "/uploads/c12ce531-80bc-40c3-8b14-f54382ab341e.jpg",
+    "description": "Beautiful landscape photograph of Windmills Leros Night",
+    "location": "Faroe Islands, Denmark",
+    "featured": true,
+    "dateAdded": "2025-03-20T09:56:24.785Z"
+  },
+  {
+    "id": "28b20bbe-a70d-4fc9-8ba0-9d30d6f39a70",
+    "title": "Cadini E Margherite V3",
+    "category": "Oceans",
+    "image": "/uploads/c8715667-721a-465d-bedc-df749afbd870.jpg",
+    "description": "Beautiful landscape photograph of Cadini E Margherite V3",
+    "location": "Faroe Islands, Denmark",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.785Z"
+  },
+  {
+    "id": "336f4d1d-8897-4a0e-a945-88dcc034545b",
+    "title": "Kallur 1 + Ducks",
+    "category": "Oceans",
+    "image": "/uploads/8d34fadc-14b9-4af6-af8e-9a57e4a15232.jpg",
+    "description": "Beautiful landscape photograph of Kallur 1 + Ducks",
+    "location": "New Zealand",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.785Z"
+  },
+  {
+    "id": "60bc93d2-d245-42cd-816e-5d91d13d98af",
+    "title": "Matera Sunset",
+    "category": "Night Sky",
+    "image": "/uploads/c1fb53d7-542f-460e-9627-ca1a4ef9f754.jpg",
+    "description": "Beautiful landscape photograph of Matera Sunset",
+    "location": "Norway",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.785Z"
+  },
+  {
+    "id": "c0272398-40c9-4d3e-823a-a02a28879ba7",
+    "title": "Kallur 1",
+    "category": "Oceans",
+    "image": "/uploads/dd4592ee-b4f8-4b08-9388-fcdfbdeeb7cb.jpg",
+    "description": "Beautiful landscape photograph of Kallur 1",
+    "location": "Patagonia, Chile",
+    "featured": true,
+    "dateAdded": "2025-03-20T09:56:24.786Z"
+  },
+  {
+    "id": "ca05e9dd-051a-4c1e-9f21-daa964f55058",
+    "title": "Pietrapertosa Pano",
+    "category": "Forests",
+    "image": "/uploads/87b56e42-2f21-4247-820f-234477820cec.jpg",
+    "description": "Beautiful landscape photograph of Pietrapertosa Pano",
+    "location": "New Zealand",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.786Z"
+  },
+  {
+    "id": "d5f91197-52ae-4697-9513-cdaecc94b1bd",
+    "title": "Teotihuacan Balloons",
+    "category": "Forests",
+    "image": "/uploads/b64a135e-2137-431e-a28f-f9071a38c0b9.jpg",
+    "description": "Beautiful landscape photograph of Teotihuacan Balloons",
+    "location": "Patagonia, Chile",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.786Z"
+  },
+  {
+    "id": "7e5847cf-8338-4c07-b8e1-4493fed70582",
+    "title": "Naxos Sunset 1 (1 Of 1)",
+    "category": "Night Sky",
+    "image": "/uploads/c806d3d5-e1c9-4d6e-8d1b-3109a3f27d0f.jpg",
+    "description": "Beautiful landscape photograph of Naxos Sunset 1 (1 Of 1)",
+    "location": "Patagonia, Chile",
+    "featured": true,
+    "dateAdded": "2025-03-20T09:56:24.786Z"
+  },
+  {
+    "id": "c0e3a796-5b71-4f37-8534-0cb26ed3be38",
+    "title": "5 Torri",
+    "category": "Oceans",
+    "image": "/uploads/ae801deb-4e78-4ee0-8573-7d9063ca1a4d.jpg",
+    "description": "Beautiful landscape photograph of 5 Torri",
+    "location": "Japan",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.786Z"
+  },
+  {
+    "id": "42c4d681-3f75-4344-a068-853025400422",
+    "title": "Vareid Rocks",
+    "category": "Night Sky",
+    "image": "/uploads/657e906d-c2c7-4582-9185-c5ed68b1cd94.jpg",
+    "description": "Beautiful landscape photograph of Vareid Rocks",
+    "location": "Japan",
+    "featured": true,
+    "dateAdded": "2025-03-20T09:56:24.786Z"
+  },
+  {
+    "id": "d6af29aa-ba20-45dc-a93a-43f5370e5300",
+    "title": "Martinique Anse Du Marin Palmes",
+    "category": "Mountains",
+    "image": "/uploads/9d3da3f9-5857-46bd-9511-453b2edc4b86.jpg",
+    "description": "Beautiful landscape photograph of Martinique Anse Du Marin Palmes",
+    "location": "New Zealand",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.787Z"
+  },
+  {
+    "id": "24c6a234-da4b-41c5-ba9d-67909ff41a75",
+    "title": "Foro Romano 4 (Sharpened)",
+    "category": "Mountains",
+    "image": "/uploads/28c35005-0f22-4491-b92f-95e3477f8fe7.jpg",
+    "description": "Beautiful landscape photograph of Foro Romano 4 (Sharpened)",
+    "location": "Dolomites, Italy",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.787Z"
+  },
+  {
+    "id": "5e10ec0b-d3c0-45f4-8635-ab0656d2f624",
+    "title": "Cervino 1",
+    "category": "Forests",
+    "image": "/uploads/14385c36-f65e-4d86-a172-dd3c014eb018.jpg",
+    "description": "Beautiful landscape photograph of Cervino 1",
+    "location": "Patagonia, Chile",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.787Z"
+  },
+  {
+    "id": "c9d295a6-0251-4a5b-ae9c-a6857e56635e",
+    "title": "Torrente Cornisello",
+    "category": "Oceans",
+    "image": "/uploads/e3c1d690-9a39-4ce1-99c2-d092a7419be0.jpg",
+    "description": "Beautiful landscape photograph of Torrente Cornisello",
+    "location": "Norway",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.787Z"
+  },
+  {
+    "id": "3bbc4174-ff7c-4bc4-95fd-0bcebd0f0172",
+    "title": "Atrani Vertical 3",
+    "category": "Deserts",
+    "image": "/uploads/7bb962d6-422d-47ac-a52a-c4e4bd7ed3e1.jpg",
+    "description": "Beautiful landscape photograph of Atrani Vertical 3",
+    "location": "Canada",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.787Z"
+  },
+  {
+    "id": "e9885e50-f198-4ec5-bb2b-b65cd7d39491",
+    "title": "Skogafoss",
+    "category": "Deserts",
+    "image": "/uploads/2a95be85-3142-460f-8289-f391b4092291.jpg",
+    "description": "Beautiful landscape photograph of Skogafoss",
+    "location": "Faroe Islands, Denmark",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.787Z"
+  },
+  {
+    "id": "6c0d4da9-7ad6-4692-93ba-700616b99845",
+    "title": "Praia Do Aventureiro",
+    "category": "Deserts",
+    "image": "/uploads/0fd278be-111c-420d-85a8-433625bc95f4.jpg",
+    "description": "Beautiful landscape photograph of Praia Do Aventureiro",
+    "location": "Dolomites, Italy",
+    "featured": false,
+    "dateAdded": "2025-03-20T09:56:24.788Z"
+  }
+]
