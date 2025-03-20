@@ -64,57 +64,65 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
     }
   };
 
-  // Sync photos on component mount
-  useEffect(() => {
-    syncPhotos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Toggle featured status
-  const toggleFeatured = async (photoId: string, currentStatus: boolean) => {
+  // Toggle the featured status of a photo
+  const toggleFeatured = async (photoId: string) => {
     try {
-      // In a full implementation, this would make an API call to update the photo
-      toast(`Toggled featured status for photo: ${photoId}`);
+      const response = await fetch('/api/photos/feature', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ photoId }),
+      });
       
-      // Update local state to reflect change
+      if (!response.ok) {
+        throw new Error('Failed to update featured status');
+      }
+      
+      // Update local state
       const updatedPhotos = photos.map(photo => 
         photo.id === photoId 
-          ? { ...photo, featured: !currentStatus } 
+          ? { ...photo, featured: !photo.featured } 
           : photo
       );
+      
       setPhotos(updatedPhotos);
-      filterPhotosByCategory(selectedCategory); // Re-apply the current filter
+      
+      // Re-apply the current filter
+      if (selectedCategory === 'All') {
+        setDisplayedPhotos(updatedPhotos);
+      } else {
+        setDisplayedPhotos(updatedPhotos.filter(p => p.category === selectedCategory));
+      }
+      
+      toast.success('Featured status updated');
     } catch (error) {
-      toast.error('Failed to update photo');
-      console.error(error);
+      console.error('Error updating featured status:', error);
+      toast.error('Failed to update featured status');
     }
   };
 
-  // Delete photo function that calls the API endpoint
+  // Delete a photo
   const deletePhoto = async (photoId: string) => {
-    if (confirm('Are you sure you want to delete this photo? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this photo? This action cannot be undone.')) {
+      setIsDeleting(photoId);
       try {
-        // Set deleting state for the current photo
-        setIsDeleting(photoId);
-        
-        // Call the API to delete the photo
         const response = await fetch('/api/photos/delete', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ photoId }),
+          body: JSON.stringify({ id: photoId }),
         });
         
-        const data = await response.json();
-        
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to delete photo');
+          throw new Error('Failed to delete photo');
         }
         
-        // Update local state to remove the photo
+        // Update local state
         const updatedPhotos = photos.filter(photo => photo.id !== photoId);
         setPhotos(updatedPhotos);
+        
         // Re-apply the current filter
         if (selectedCategory === 'All') {
           setDisplayedPhotos(updatedPhotos);
@@ -122,145 +130,132 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
           setDisplayedPhotos(updatedPhotos.filter(p => p.category === selectedCategory));
         }
         
-        // Show success message
-        toast.success(`Photo deleted successfully (${data.remainingCount} photos remaining)`);
-        
-        // Force a revalidation by calling the revalidate API
-        try {
-          const paths = ['/', '/admin', '/news', '/prints'];
-          for (const path of paths) {
-            await fetch(`/api/revalidate?path=${path}&secret=barelands_secret_key`);
-          }
-        } catch (e) {
-          console.error('Error revalidating paths:', e);
-        }
+        toast.success('Photo deleted successfully');
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to delete photo');
         console.error('Error deleting photo:', error);
+        toast.error('Failed to delete photo');
       } finally {
         setIsDeleting(null);
       }
     }
   };
 
+  // Initialize by syncing photos when component mounts
+  useEffect(() => {
+    syncPhotos();
+  }, []);
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-2">
-            Filter by Category
-          </label>
+          <Button 
+            onClick={syncPhotos} 
+            disabled={isSyncing}
+            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700"
+          >
+            {isSyncing ? (
+              <>
+                <FiRefreshCw className="animate-spin" />
+                Syncing...
+              </>
+            ) : (
+              <>
+                <FiRefreshCw />
+                Sync Photos
+              </>
+            )}
+          </Button>
+        </div>
+        
+        <div>
           <select
-            id="category-filter"
             value={selectedCategory}
             onChange={(e) => filterPhotosByCategory(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="px-4 py-2 rounded-md bg-zinc-800 border-none"
           >
-            <option value="All">All Photos</option>
-            {photoCategories.filter(c => c !== 'All').map((category) => (
+            {photoCategories.map((category) => (
               <option key={category} value={category}>
                 {category}
               </option>
             ))}
           </select>
         </div>
-        
-        <Button 
-          onClick={syncPhotos}
-          disabled={isSyncing}
-          className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors disabled:opacity-50"
-        >
-          {isSyncing ? (
-            <>
-              <FiRefreshCw className="mr-2 animate-spin" />
-              Syncing...
-            </>
-          ) : (
-            <>
-              <FiRefreshCw className="mr-2" />
-              Sync Photos
-            </>
-          )}
-        </Button>
       </div>
       
+      {/* Photos count summary */}
+      <div className="text-sm text-zinc-400">
+        Displaying {displayedPhotos.length} photo{displayedPhotos.length !== 1 ? 's' : ''} 
+        {selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}
+        {' '} (Total: {photos.length})
+      </div>
+
       {displayedPhotos.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-          <FiAlertTriangle className="mx-auto h-10 w-10 text-gray-400 mb-3" />
-          <h3 className="text-lg font-medium text-gray-900 mb-1">No photos found</h3>
-          <p className="text-gray-500">
+        <div className="text-center py-12 border border-dashed border-zinc-700 rounded-lg">
+          <FiAlertTriangle className="mx-auto h-8 w-8 text-zinc-500 mb-2" />
+          <p className="text-zinc-400">
             {selectedCategory === 'All' 
-              ? 'There are no photos in the gallery yet. Try uploading some photos first.' 
-              : `No photos found in the "${selectedCategory}" category. Try selecting a different category.`}
+              ? 'No photos found. Upload some photos to get started.'
+              : `No photos found in the "${selectedCategory}" category.`}
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayedPhotos.map((photo) => (
-            <div key={photo.id} className="bg-gray-50 rounded-lg overflow-hidden shadow border border-gray-200">
-              <div className="relative aspect-video overflow-hidden">
-                <img
-                  src={photo.image}
+            <div key={photo.id} className="relative group overflow-hidden rounded-lg">
+              {/* Photo */}
+              <div className="relative aspect-[4/3] bg-zinc-800">
+                <img 
+                  src={photo.image} 
                   alt={photo.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Show placeholder for failed images
+                    e.currentTarget.src = '/placeholder-image.jpg';
+                  }}
                 />
-                
-                <div className="absolute top-2 right-2 flex gap-2">
-                  <button
-                    onClick={() => toggleFeatured(photo.id, photo.featured || false)}
-                    className={`p-2 rounded-full ${
-                      photo.featured 
-                        ? 'bg-yellow-500 text-white' 
-                        : 'bg-white/80 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    title={photo.featured ? 'Remove from featured' : 'Add to featured'}
-                    disabled={isDeleting === photo.id}
-                  >
-                    <FiStar className="w-4 h-4" />
-                  </button>
-                  
-                  <button
-                    onClick={() => deletePhoto(photo.id)}
-                    className={`p-2 ${
-                      isDeleting === photo.id
-                        ? 'bg-red-100 text-red-600 cursor-not-allowed'
-                        : 'bg-white/80 text-red-600 hover:bg-red-100'
-                    } rounded-full`}
-                    title="Delete photo"
-                    disabled={isDeleting === photo.id}
-                  >
-                    {isDeleting === photo.id ? (
-                      <span className="animate-pulse">...</span>
-                    ) : (
-                      <FiTrash2 className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               
-              <div className="p-4">
-                <h3 className="text-lg font-medium text-gray-900 mb-1">{photo.title}</h3>
-                <p className="text-sm text-gray-600 mb-2">{photo.location}</p>
-                <div className="flex justify-between items-center">
-                  <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-200 text-gray-800 rounded-md">
+              {/* Info overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/50 backdrop-blur-sm transform translate-y-full group-hover:translate-y-0 transition-transform">
+                <h3 className="text-white font-medium truncate">{photo.title}</h3>
+                <p className="text-zinc-300 text-sm truncate">{photo.location}</p>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs px-2 py-1 rounded-full bg-zinc-700 text-zinc-300">
                     {photo.category}
                   </span>
-                  <span className="text-xs text-gray-500">
-                    {new Date(photo.dateAdded).toLocaleDateString()}
-                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant={photo.featured ? "secondary" : "outline"}
+                      onClick={() => toggleFeatured(photo.id)}
+                      className={`p-1 h-8 w-8 ${
+                        photo.featured ? "bg-amber-600 hover:bg-amber-700" : ""
+                      }`}
+                    >
+                      <FiStar className={photo.featured ? "text-white" : ""} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deletePhoto(photo.id)}
+                      disabled={isDeleting === photo.id}
+                      className="p-1 h-8 w-8"
+                    >
+                      {isDeleting === photo.id ? (
+                        <FiCheck className="animate-pulse" />
+                      ) : (
+                        <FiTrash2 />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
-      
-      <div className="mt-4 text-sm text-gray-500 bg-gray-50 p-4 rounded-lg border border-gray-200">
-        <p className="flex items-center">
-          <FiCheck className="text-green-500 mr-2" />
-          <span>Currently showing {displayedPhotos.length} photo{displayedPhotos.length !== 1 ? 's' : ''} {selectedCategory !== 'All' ? `in ${selectedCategory}` : '(all categories)'} out of {photos.length} total photos.</span>
-        </p>
-      </div>
     </div>
   );
 } 

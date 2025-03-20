@@ -2,22 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { photos, Photo } from '@/lib/data';
-import fs from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
+import { existsSync } from 'fs';
+import { revalidatePath } from 'next/cache';
+import fsPromises from 'fs/promises';
+import { photoImageExists } from '@/lib/server-storage';
 
 // Path to stored photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
 
-// Load photos from JSON file
-async function loadPhotoData(): Promise<Photo[]> {
+// Ensure data directory exists
+async function ensureDataDirectory() {
+  const dataDir = path.join(process.cwd(), 'data');
   try {
-    const exists = await fs.access(PHOTO_DATA_PATH).then(() => true).catch(() => false);
+    await fsPromises.mkdir(dataDir, { recursive: true });
+  } catch (error) {
+    console.error('Error creating data directory:', error);
+  }
+}
+
+// Load photos from JSON file
+async function loadPhotoData() {
+  try {
+    await ensureDataDirectory();
+    const exists = await fsPromises.access(PHOTO_DATA_PATH).then(() => true).catch(() => false);
     if (!exists) {
-      // If the file doesn't exist, return an empty array
       return [];
     }
-    
-    const data = await fs.readFile(PHOTO_DATA_PATH, 'utf-8');
+    const data = await fsPromises.readFile(PHOTO_DATA_PATH, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
     console.error('Error loading photo data:', error);
@@ -25,75 +38,83 @@ async function loadPhotoData(): Promise<Photo[]> {
   }
 }
 
-// Save photo data to the JSON file
-async function savePhotoData(photoData: Photo[]): Promise<boolean> {
-  try {
-    const dataDir = path.dirname(PHOTO_DATA_PATH);
-    await fs.mkdir(dataDir, { recursive: true });
-    await fs.writeFile(PHOTO_DATA_PATH, JSON.stringify(photoData, null, 2));
-    return true;
-  } catch (error) {
-    console.error('Error saving photo data:', error);
-    return false;
+// Revalidate all pages to update the UI
+async function revalidateAllPages(baseUrl: string) {
+  const pagesToRevalidate = ['/', '/admin', '/news', '/prints', '/portfolio'];
+  const results = {
+    success: [] as string[],
+    failed: [] as string[]
+  };
+  
+  for (const page of pagesToRevalidate) {
+    try {
+      await fetch(`${baseUrl}/api/revalidate?path=${page}&secret=barelands_secret_key`);
+      console.log(`Revalidated path: ${page}`);
+      results.success.push(page);
+    } catch (error) {
+      console.error(`Failed to revalidate path ${page}:`, error);
+      results.failed.push(page);
+    }
   }
+  
+  return results;
 }
 
-// Revalidate all pages to refresh cache
-async function revalidateAllPages(baseUrl: string): Promise<boolean> {
-  try {
-    const pagesToRevalidate = ['/', '/admin', '/news', '/prints', '/portfolio'];
-    
-    for (const page of pagesToRevalidate) {
-      try {
-        await fetch(`${baseUrl}/api/revalidate?path=${page}&secret=barelands_secret_key`);
-        console.log(`Revalidated page: ${page}`);
-      } catch (error) {
-        console.error(`Failed to revalidate page ${page}:`, error);
-      }
+// Validate photo data and remove references to missing files
+async function validatePhotos(photoData: any[]): Promise<any[]> {
+  const validatedPhotos = [];
+  
+  for (const photo of photoData) {
+    if (!photo.image || !photo.image.startsWith('/uploads/')) {
+      // Keep non-upload images without validation
+      validatedPhotos.push(photo);
+      continue;
     }
     
-    return true;
-  } catch (error) {
-    console.error('Error during revalidation:', error);
-    return false;
+    // Check if the image file exists using the async photoImageExists function
+    const exists = await photoImageExists(photo);
+    if (exists) {
+      validatedPhotos.push(photo);
+    } else {
+      console.warn(`Warning: Image file not found for photo: ${photo.title}. Skipping.`);
+    }
   }
+  
+  return validatedPhotos;
 }
 
-// Synchronize in-memory photos with stored JSON data
+// Routes
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication for admin functions
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    // Load the current stored photos
+    // For sync endpoint, allow public access for system health checks
     const storedPhotos = await loadPhotoData();
+    const validatedPhotos = await validatePhotos(storedPhotos);
     
-    // Clear the in-memory photos array
+    // Clear the in-memory array
     photos.length = 0;
     
-    // Repopulate with photos from JSON storage
-    storedPhotos.forEach(photo => {
+    // Push validated photos into the in-memory array
+    validatedPhotos.forEach(photo => {
       photos.push(photo);
     });
     
-    // Also save the current state back to JSON (ensures consistency)
-    await savePhotoData(photos);
+    console.log(`Initialized ${photos.length} photos (filtered from ${storedPhotos.length} total)`);
     
-    // Revalidate all pages to refresh the cache
-    await revalidateAllPages(request.nextUrl.origin);
+    // Revalidate all pages to ensure the UI is updated
+    const revalidationResults = await revalidateAllPages(request.nextUrl.origin);
     
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Photos synchronized successfully and all pages revalidated', 
-      count: photos.length 
+    return NextResponse.json({
+      success: true,
+      message: "Photos synchronized and all pages revalidated",
+      photoCount: photos.length,
+      originalCount: storedPhotos.length,
+      revalidationResults
     });
   } catch (error) {
-    console.error('Error synchronizing photos:', error);
+    console.error("Error synchronizing photos:", error);
+    
     return NextResponse.json(
-      { error: 'Failed to synchronize photos' },
+      { success: false, error: "Failed to synchronize photos" },
       { status: 500 }
     );
   }

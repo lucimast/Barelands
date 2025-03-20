@@ -50,7 +50,7 @@ export default function Navbar() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-8 items-center">
           <NavLink href="/#about">Who I Am</NavLink>
-          <NavLink href="/#portfolio">Portfolio</NavLink>
+          <NavLink href="/portfolio">Portfolio</NavLink>
           <NavLink href="/news">News</NavLink>
           <NavLink href="/prints">Buy a Print</NavLink>
           <NavLink href="/#contact">Contact</NavLink>
@@ -90,7 +90,7 @@ export default function Navbar() {
                 Who I Am
               </MobileNavLink>
               <MobileNavLink
-                href="/#portfolio"
+                href="/portfolio"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Portfolio

@@ -94,23 +94,62 @@ export default function UploadPhoto() {
         status: 'started'
       });
 
-      const response = await fetch('/api/photos/upload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: photo.title,
-          category: photo.category,
-          location: photo.location,
-          description: photo.description,
-          image: previewUrl,
-        }),
+      // Get the file from the file input
+      const fileInput = fileInputRef.current;
+      const file = fileInput?.files?.[0];
+      
+      if (!file) {
+        throw new Error('No file selected');
+      }
+
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (file.size > maxSize) {
+        throw new Error(`File size exceeds 10MB limit (${(file.size / (1024 * 1024)).toFixed(2)}MB)`);
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error(`File type ${file.type} is not supported. Please use JPG, PNG, or WEBP.`);
+      }
+
+      console.log('Uploading file:', {
+        name: file.name,
+        type: file.type,
+        size: `${(file.size / 1024).toFixed(2)} KB`
       });
 
-      const data = await response.json();
+      // Create a FormData object to send the file and other data
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('title', photo.title);
+      formData.append('category', photo.category);
+      formData.append('location', photo.location || '');
+      formData.append('description', photo.description || '');
+      
+      const response = await fetch('/api/photos/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      // First try to parse response as JSON
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // If not JSON, get text and log it
+        const text = await response.text();
+        console.error('Received non-JSON response:', text);
+        throw new Error('Server returned an invalid response format');
+      }
 
       if (!response.ok) {
+        // If we have detailed error information, use it
+        if (data.details) {
+          throw new Error(`${data.error}: ${data.details}`);
+        }
         throw new Error(data.error || 'Failed to upload photo');
       }
 
@@ -122,6 +161,11 @@ export default function UploadPhoto() {
       });
 
       toast.success("Photo uploaded successfully!");
+      
+      // Refresh the page data to show the new photo
+      router.refresh();
+      
+      // Navigate to photos page
       router.push("/admin/photos");
     } catch (error) {
       // Track failed upload

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
+import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { photos, Photo } from '@/lib/data';
-import { saveImageToLocal, createUploadFolderIfNeeded } from '@/lib/storage';
+import { saveImageToLocal, createUploadFolderIfNeeded } from '@/lib/server-storage';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import path from 'path';
@@ -92,11 +92,16 @@ async function revalidatePages(baseUrl: string) {
 
 // Helper function to convert File to base64
 async function fileToBase64(file: File): Promise<string> {
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-  const base64 = buffer.toString('base64');
-  const mimeType = file.type;
-  return `data:${mimeType};base64,${base64}`;
+  try {
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64 = buffer.toString('base64');
+    const mimeType = file.type;
+    return `data:${mimeType};base64,${base64}`;
+  } catch (error) {
+    console.error('Error converting file to base64:', error);
+    throw new Error('Failed to process image file');
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -104,11 +109,22 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
     }
 
     // Parse request body
-    const formData = await request.formData();
+    let formData;
+    try {
+      formData = await request.formData();
+    } catch (error) {
+      console.error('Error parsing form data:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid form data', 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 400 });
+    }
+
     const imageFile = formData.get('image') as File | null;
     const title = formData.get('title') as string;
     const category = formData.get('category') as string;
@@ -118,21 +134,64 @@ export async function POST(request: NextRequest) {
     const featured = featuredStr === 'true';
 
     // Validate required fields
-    if (!imageFile || !title || !category) {
+    if (!imageFile) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { success: false, error: 'No image file provided' },
         { status: 400 }
       );
     }
 
+    if (!title || !category) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields (title or category)' },
+        { status: 400 }
+      );
+    }
+
+    // Log file info for debugging
+    console.log('Image file details:', {
+      name: imageFile.name,
+      type: imageFile.type,
+      size: imageFile.size,
+    });
+
     // Ensure uploads folder exists
-    await createUploadFolderIfNeeded();
+    try {
+      await createUploadFolderIfNeeded();
+    } catch (error) {
+      console.error('Error creating uploads folder:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to prepare upload directory',
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      }, { status: 500 });
+    }
 
     // Convert file to base64
-    const base64Image = await fileToBase64(imageFile);
+    let base64Image;
+    try {
+      base64Image = await fileToBase64(imageFile);
+    } catch (error) {
+      console.error('Error converting file to base64:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to process image file',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 });
+    }
 
     // Save image to local storage
-    const savedImagePath = await saveImageToLocal(base64Image);
+    let savedImagePath;
+    try {
+      savedImagePath = await saveImageToLocal(base64Image);
+    } catch (error) {
+      console.error('Error saving image to local storage:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to save image file',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 });
+    }
     
     // Create new photo object
     const newPhoto = {
@@ -147,27 +206,61 @@ export async function POST(request: NextRequest) {
     };
 
     // Load existing photos from file
-    const existingPhotos = await loadPhotoData();
+    let existingPhotos;
+    try {
+      existingPhotos = await loadPhotoData();
+    } catch (error) {
+      console.error('Error loading existing photos:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to load existing photos',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 });
+    }
     
     // Add new photo and save back to file
-    existingPhotos.push(newPhoto);
-    await savePhotoData(existingPhotos);
+    try {
+      existingPhotos.push(newPhoto);
+      await savePhotoData(existingPhotos);
+    } catch (error) {
+      console.error('Error saving photo data:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to save photo data',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 });
+    }
     
     // Synchronize the in-memory photos array with the updated file
-    await synchronizePhotos();
+    try {
+      await synchronizePhotos();
+    } catch (error) {
+      console.error('Error synchronizing photos:', error);
+      // Continue anyway as the photo is already saved
+    }
     
     // Revalidate all pages to ensure the new photo appears everywhere
-    await revalidatePages(request.nextUrl.origin);
+    try {
+      await revalidatePages(request.nextUrl.origin);
+    } catch (error) {
+      console.error('Error revalidating pages:', error);
+      // Continue anyway as this shouldn't block the upload
+    }
 
     return NextResponse.json({ 
       success: true, 
       photo: newPhoto,
-      message: 'Photo uploaded and all pages revalidated'
+      message: 'Photo uploaded successfully'
     });
   } catch (error) {
-    console.error('Error in photo upload:', error);
+    console.error('Unhandled error in photo upload:', error);
     return NextResponse.json(
-      { error: 'Failed to upload photo' },
+      { 
+        success: false, 
+        error: 'Failed to upload photo',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

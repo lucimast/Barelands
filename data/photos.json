@@ -90,23 +90,23 @@
     "dateAdded": "2025-03-20T09:56:24.785Z"
   },
   {
-    "id": "c0272398-40c9-4d3e-823a-a02a28879ba7",
-    "title": "Kallur Lighthouse View",
-    "category": "Oceans",
-    "image": "/uploads/dd4592ee-b4f8-4b08-9388-fcdfbdeeb7cb.jpg",
-    "description": "Dramatic cliffs and oceanic views",
-    "location": "Faroe Islands, Denmark",
-    "featured": true,
-    "dateAdded": "2025-03-20T09:56:24.786Z"
-  },
-  {
-    "id": "6fc15d78-4ffe-4eb6-86da-7e524579b660",
-    "title": "Endless Sunset",
+    "id": "13a9a209-c59b-4a39-863e-961217ea34b1",
+    "title": "Infinte Sunset",
     "category": "Mountains",
     "description": "\r\nThis photo almost costed me an elbow. I got so mesmerized by the light and the atmosphere that I failed to notice how slippery the rocks were on this beach. So I fell badly on one of those and to protect my camera I pointed my elbow down. I still feel the pain if I think about it… though a couple of years later I think it was worth it 😀",
-    "location": "Vareid beach, Lofoten, Norway",
-    "image": "/uploads/11e9034b-9455-4fae-8bd0-3ce28c378c33.jpeg",
+    "location": "Lofoten, Norway",
+    "image": "/uploads/45d85927-8d9c-455e-bea7-21b4f5186669.jpg",
     "featured": true,
-    "dateAdded": "2025-03-20T11:00:28.331Z"
+    "dateAdded": "2025-03-20T18:02:39.049Z"
+  },
+  {
+    "id": "e638c313-3f3d-4eed-bf71-4f8efca64d82",
+    "title": "Misty Morning",
+    "category": "Mountains",
+    "description": "View of a small mountain river in the Cornisello area of the Dolomites in Italy",
+    "location": "Laghi di Cornisello (Italy)",
+    "image": "/uploads/bc310af3-b169-470e-a594-77dc041b918f.jpg",
+    "featured": true,
+    "dateAdded": "2025-03-20T18:53:07.190Z"
   }
 ]

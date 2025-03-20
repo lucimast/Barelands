@@ -4,27 +4,63 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import Masonry from "react-masonry-css";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { photoCategories, photos, type Photo } from "@/lib/data";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { photoCategories, type Photo } from "@/lib/data";
 import { trackEvent } from "@/lib/analytics";
+import { filterValidPhotos } from "@/lib/storage";
 
 export default function PortfolioSection() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [isMounted, setIsMounted] = useState(false);
-  const [filteredItems, setFilteredItems] = useState(photos);
+  const [filteredItems, setFilteredItems] = useState<Photo[]>([]);
+  const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Set initial state and handle client-side hydration
+  // Fetch photos from API
   useEffect(() => {
-    setIsMounted(true);
-    if (activeCategory === "All") {
-      setFilteredItems(photos);
-    } else {
-      setFilteredItems(photos.filter(item => item.category === activeCategory));
-    }
+    const fetchPhotos = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/photos');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch photos');
+        }
+        
+        const data = await response.json();
+        const validPhotos = filterValidPhotos(data);
+        setAllPhotos(validPhotos);
+        
+        // Apply category filter
+        if (activeCategory === "All") {
+          setFilteredItems(validPhotos);
+        } else {
+          setFilteredItems(validPhotos.filter((photo) => photo.category === activeCategory));
+        }
+        
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching photos:', err);
+        setError('Failed to load photos. Please try again.');
+      } finally {
+        setIsLoading(false);
+        setIsMounted(true);
+      }
+    };
+
+    fetchPhotos();
   }, [activeCategory]);
 
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category);
+    
+    // Apply new category filter
+    if (category === "All") {
+      setFilteredItems(allPhotos);
+    } else {
+      setFilteredItems(allPhotos.filter(item => item.category === category));
+    }
     
     // Track category filter event
     trackEvent('category_filter', { category });
@@ -72,8 +108,29 @@ export default function PortfolioSection() {
           ))}
         </div>
 
-        {/* Masonry Grid - Only render on client side */}
-        {isMounted && (
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-12">
+            <div className="w-8 h-8 border-4 border-zinc-500 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-zinc-400">Loading photos...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-12">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded text-sm"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* Masonry Grid - Only render when loaded and mounted */}
+        {!isLoading && !error && isMounted && filteredItems.length > 0 && (
           <Masonry
             breakpointCols={breakpointColumnsObj}
             className="flex w-auto -ml-4"
@@ -92,6 +149,13 @@ export default function PortfolioSection() {
             ))}
           </Masonry>
         )}
+
+        {/* No Photos State */}
+        {!isLoading && !error && isMounted && filteredItems.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-zinc-400">No photos found in this category.</p>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -101,6 +165,7 @@ function PhotoItem({ item }: { item: Photo }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   // Default to assuming landscape orientation
   const [isPortrait, setIsPortrait] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   // Check if the image is portrait-oriented
   useEffect(() => {
@@ -110,6 +175,9 @@ function PhotoItem({ item }: { item: Photo }) {
         const img = document.createElement('img');
         img.onload = () => {
           setIsPortrait(img.height > img.width);
+        };
+        img.onerror = () => {
+          setImageError(true);
         };
         img.src = item.image;
       };
@@ -129,6 +197,11 @@ function PhotoItem({ item }: { item: Photo }) {
     }
   }, [isDialogOpen, item]);
 
+  // Don't render if image failed to load
+  if (imageError) {
+    return null;
+  }
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
@@ -140,6 +213,7 @@ function PhotoItem({ item }: { item: Photo }) {
               alt={item.title}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={() => setImageError(true)}
             />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4">
@@ -150,6 +224,7 @@ function PhotoItem({ item }: { item: Photo }) {
       </DialogTrigger>
       {isDialogOpen && (
         <DialogContent className="sm:max-w-4xl bg-zinc-900 border-zinc-800">
+          <DialogTitle className="sr-only">{item.title}</DialogTitle>
           <div className={`grid ${isPortrait ? 'md:grid-cols-[40%_60%]' : 'md:grid-cols-[60%_40%]'} gap-6`}>
             <div className={`relative ${isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'} w-full`}>
               <Image
@@ -157,6 +232,7 @@ function PhotoItem({ item }: { item: Photo }) {
                 alt={item.title}
                 fill
                 className="object-cover rounded-md"
+                onError={() => setImageError(true)}
               />
             </div>
             <div className="flex flex-col justify-center">

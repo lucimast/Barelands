@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
+import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { photos, Photo } from '@/lib/data';
 import fs from 'fs/promises';
 import path from 'path';
+import { deleteImageFile } from '@/lib/server-storage';
+import { revalidatePath } from 'next/cache';
 
 // Path to stored photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
@@ -24,15 +26,29 @@ async function loadPhotoData(): Promise<Photo[]> {
 }
 
 // Save photo data to file
-async function savePhotoData(photoData: Photo[]) {
+async function savePhotoData(photoData: Photo[]): Promise<boolean> {
   try {
-    const dataDir = path.join(process.cwd(), 'data');
+    const dataDir = path.dirname(PHOTO_DATA_PATH);
     await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(PHOTO_DATA_PATH, JSON.stringify(photoData, null, 2));
     return true;
   } catch (error) {
     console.error('Error saving photo data:', error);
     return false;
+  }
+}
+
+// Revalidate all relevant pages to update the UI
+async function revalidateAllPages(baseUrl: string) {
+  const pagesToRevalidate = ['/', '/admin', '/news', '/prints', '/portfolio'];
+  
+  for (const page of pagesToRevalidate) {
+    try {
+      await fetch(`${baseUrl}/api/revalidate?path=${page}&secret=barelands_secret_key`);
+      console.log(`Revalidated path: ${page}`);
+    } catch (error) {
+      console.error(`Failed to revalidate path ${page}:`, error);
+    }
   }
 }
 
@@ -44,18 +60,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Get photo ID from request body
-    const { photoId } = await request.json();
-    
-    if (!photoId) {
+    // Parse request body to get photo ID
+    const body = await request.json();
+    const { id } = body;
+
+    if (!id) {
       return NextResponse.json(
         { error: 'Photo ID is required' },
         { status: 400 }
       );
     }
 
-    // Find the photo to delete
-    const photoToDelete = photos.find(photo => photo.id === photoId);
+    // Find the photo in both memory and storage
+    const inMemoryPhotoIndex = photos.findIndex(photo => photo.id === id);
+    const storedPhotos = await loadPhotoData();
+    const storedPhotoIndex = storedPhotos.findIndex(photo => photo.id === id);
+
+    // Check if photo exists
+    if (inMemoryPhotoIndex === -1 && storedPhotoIndex === -1) {
+      return NextResponse.json(
+        { error: 'Photo not found' },
+        { status: 404 }
+      );
+    }
+
+    let photoToDelete: Photo | null = null;
+    
+    // Get photo info from wherever it exists
+    if (inMemoryPhotoIndex !== -1) {
+      photoToDelete = photos[inMemoryPhotoIndex];
+    } else if (storedPhotoIndex !== -1) {
+      photoToDelete = storedPhotos[storedPhotoIndex];
+    }
+    
     if (!photoToDelete) {
       return NextResponse.json(
         { error: 'Photo not found' },
@@ -63,43 +100,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Remove photo from the in-memory array
-    const photoIndex = photos.findIndex(photo => photo.id === photoId);
-    if (photoIndex !== -1) {
-      photos.splice(photoIndex, 1);
-    }
-    
-    // Also update the photos.json file to ensure persistence
-    await savePhotoData(photos);
-
-    // Attempt to delete the actual image file from public uploads
-    if (photoToDelete?.image) {
-      try {
-        const imagePath = path.join(process.cwd(), 'public', photoToDelete.image);
-        await fs.access(imagePath); // Check if file exists
-        await fs.unlink(imagePath);
-        console.log(`Deleted image file: ${imagePath}`);
-      } catch (err) {
-        // Log but don't fail if file doesn't exist or can't be deleted
-        console.log(`Image file not found or cannot be deleted: ${photoToDelete.image}`);
+    // 1. Delete the physical image file
+    if (photoToDelete.image.startsWith('/uploads/')) {
+      const deleted = await deleteImageFile(photoToDelete.image);
+      if (deleted) {
+        console.log(`Deleted image file: ${photoToDelete.image}`);
+      } else {
+        console.warn(`Failed to delete image file: ${photoToDelete.image}`);
+        // Continue with deletion even if file removal fails
       }
     }
 
-    // Force the Next.js cache to revalidate all relevant paths
-    try {
-      const revalidatePaths = ['/', '/admin', '/news', '/prints', '/portfolio'];
-      for (const pathname of revalidatePaths) {
-        await fetch(`${request.nextUrl.origin}/api/revalidate?path=${pathname}&secret=barelands_secret_key`);
-      }
-    } catch (error) {
-      console.error('Error revalidating paths:', error);
+    // 2. Remove from memory array
+    if (inMemoryPhotoIndex !== -1) {
+      photos.splice(inMemoryPhotoIndex, 1);
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      photoId,
+    // 3. Remove from JSON storage
+    if (storedPhotoIndex !== -1) {
+      storedPhotos.splice(storedPhotoIndex, 1);
+      await savePhotoData(storedPhotos);
+    }
+
+    // 4. Revalidate all pages to refresh the UI
+    await revalidateAllPages(request.nextUrl.origin);
+
+    return NextResponse.json({
+      success: true,
       message: 'Photo deleted successfully',
-      remainingCount: photos.length
+      photoId: id
     });
   } catch (error) {
     console.error('Error deleting photo:', error);
