@@ -108,7 +108,7 @@ export default function PortfolioSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold mb-2">Portfolio</h2>
+          <h2 className="text-3xl font-bold mb-2">{isHomepage ? "A selection of my works" : "Portfolio"}</h2>
           <div className="w-20 h-1 bg-zinc-400 mx-auto mb-6"></div>
           <p className="text-zinc-400 max-w-3xl mx-auto mb-12">
             A collection of my finest landscape photographs from around the world, each capturing a unique moment in time

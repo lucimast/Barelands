@@ -148,5 +148,65 @@
     "image": "/uploads/a33874ab-a5a3-4a2c-bdee-502796ff41d8.jpg",
     "featured": false,
     "dateAdded": "2025-03-21T11:09:08.989Z"
+  },
+  {
+    "id": "b7bd7fa5-4b6e-4d0d-bb93-0e44630eee7c",
+    "title": "Dolomites mood",
+    "category": "Mountains",
+    "description": "A misty sunset in the Dolomites",
+    "location": "Cinque Torri, Italy",
+    "image": "/uploads/c41a1c07-1251-4cc9-837b-ca5abdb55045.jpg",
+    "featured": true,
+    "dateAdded": "2025-03-21T11:20:59.968Z"
+  },
+  {
+    "id": "05e68baf-f9a9-4892-961e-e9cddfed0834",
+    "title": "Quintessentially Italy",
+    "category": "Italy",
+    "description": "A nice view of Atrani, a lesser known village on the Amalfi coast which is very dear to my heart",
+    "location": "Atrani, Italy",
+    "image": "/uploads/761c9bae-8f69-487f-a348-f2d73517807b.jpg",
+    "featured": false,
+    "dateAdded": "2025-03-21T11:22:23.570Z"
+  },
+  {
+    "id": "8f3d85b1-862e-419a-9d73-dabbac21fe5e",
+    "title": "Waiting for the Buccaneers",
+    "category": "Oceans",
+    "description": "A lovely sunset on Martinique, sipping rum and waiting for the pirates to show up...",
+    "location": "Anse du Marin, Martinique",
+    "image": "/uploads/3b9b658b-12aa-477c-ac1f-5bf400fb0142.jpg",
+    "featured": false,
+    "dateAdded": "2025-03-21T11:24:15.055Z"
+  },
+  {
+    "id": "94c139f4-b19b-4111-ad17-e656250dcd74",
+    "title": "Sunset Explosion",
+    "category": "Travel",
+    "description": "A photo of what was perhaps the most beautiful sunset I witnessed in my life. Lucky to have brought my camera with me...",
+    "location": "Naxos, Greece",
+    "image": "/uploads/9ff80479-696e-498c-aea4-7a69e9ac3511.jpg",
+    "featured": true,
+    "dateAdded": "2025-03-21T11:25:31.302Z"
+  },
+  {
+    "id": "11b9c467-6119-4c70-8e55-699621a65bc1",
+    "title": "The other Dolomites",
+    "category": "Italy",
+    "description": "A pano of the small village of Pietrapertosa on the Lucan Dolomites, unique rock formations reminding the northern Dolomites, only located in the south of Italy",
+    "location": "Pietrapertosa, Italy",
+    "image": "/uploads/717f5226-3f6f-4018-8793-d8d369763956.jpg",
+    "featured": false,
+    "dateAdded": "2025-03-21T11:27:45.063Z"
+  },
+  {
+    "id": "33a4be76-c29b-438a-a4f6-dc499969e550",
+    "title": "Ballooning",
+    "category": "Travel",
+    "description": "What is better than a ballon trip at dawn to watch the pyramids?",
+    "location": "Teotihuacan, Mexico",
+    "image": "/uploads/77aa1021-c2e0-4aed-a6aa-2ef9a8644c5a.jpg",
+    "featured": false,
+    "dateAdded": "2025-03-21T11:28:58.061Z"
   }
 ]
