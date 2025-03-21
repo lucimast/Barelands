@@ -18,6 +18,14 @@ export default function PortfolioSection() {
   const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isHomepage, setIsHomepage] = useState(false);
+
+  // Check if we're on the homepage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsHomepage(window.location.pathname === '/');
+    }
+  }, []);
 
   // Fetch photos from API
   useEffect(() => {
@@ -33,15 +41,19 @@ export default function PortfolioSection() {
         const data = await response.json();
         const validPhotos = filterValidPhotos(data);
         
-        // Filter to only include featured photos for the homepage portfolio section
-        const featuredPhotos = validPhotos.filter(photo => photo.featured);
-        setAllPhotos(featuredPhotos);
+        // On homepage, filter to only show featured photos
+        // On portfolio page, show all photos
+        const photosToDisplay = isHomepage 
+          ? validPhotos.filter(photo => photo.featured) 
+          : validPhotos;
+        
+        setAllPhotos(photosToDisplay);
         
         // Apply category filter
         if (activeCategory === "All") {
-          setFilteredItems(featuredPhotos);
+          setFilteredItems(photosToDisplay);
         } else {
-          setFilteredItems(featuredPhotos.filter((photo) => photo.category === activeCategory));
+          setFilteredItems(photosToDisplay.filter((photo) => photo.category === activeCategory));
         }
         
         setError(null);
@@ -55,7 +67,7 @@ export default function PortfolioSection() {
     };
 
     fetchPhotos();
-  }, [activeCategory]);
+  }, [activeCategory, isHomepage]);
 
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category);

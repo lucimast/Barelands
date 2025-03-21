@@ -56,7 +56,7 @@
     "image": "/uploads/c12ce531-80bc-40c3-8b14-f54382ab341e.jpg",
     "description": "Windmills under the night sky",
     "location": "Leros, Greece",
-    "featured": true,
+    "featured": false,
     "dateAdded": "2025-03-20T09:56:24.785Z"
   },
   {
@@ -66,7 +66,7 @@
     "image": "/uploads/c8715667-721a-465d-bedc-df749afbd870.jpg",
     "description": "Mountain view with wildflowers in the foreground",
     "location": "Dolomites, Italy",
-    "featured": true,
+    "featured": false,
     "dateAdded": "2025-03-20T09:56:24.785Z"
   },
   {
@@ -116,7 +116,7 @@
     "description": "Facing the elements in Iceland as a daily reality",
     "location": "Skogafoss, Iceland",
     "image": "/uploads/ae8e4587-ce2a-4809-a105-8a2af64dd13f.jpg",
-    "featured": true,
+    "featured": false,
     "dateAdded": "2025-03-21T09:45:15.165Z"
   },
   {
