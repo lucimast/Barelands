@@ -47,7 +47,9 @@ export default function HeroSection() {
           // Find the Cuernos Del Paine (Patagonia) photo
           usablePhotos.find(photo => photo.title.includes("Cuernos Del Paine")),
           // Find the Iguazu Falls photo
-          usablePhotos.find(photo => photo.title.includes("Iguazu"))
+          usablePhotos.find(photo => photo.title.includes("Iguazu")),
+          // Find the "Find your targets!" photo from Patagonia
+          usablePhotos.find(photo => photo.title.includes("Find your targets"))
         ].filter(Boolean) as Photo[];
         
         // If we have at least one of the specified photos, return what we found
@@ -103,7 +105,9 @@ export default function HeroSection() {
           // Find the Cuernos Del Paine (Patagonia) photo
           validPhotos.find(photo => photo.title.includes("Cuernos Del Paine")),
           // Find the Iguazu Falls photo
-          validPhotos.find(photo => photo.title.includes("Iguazu"))
+          validPhotos.find(photo => photo.title.includes("Iguazu")),
+          // Find the "Find your targets!" photo from Patagonia
+          validPhotos.find(photo => photo.title.includes("Find your targets"))
         ].filter(Boolean) as Photo[];
         
         // Only update the slideshow if we have at least one of the specified photos

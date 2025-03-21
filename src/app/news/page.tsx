@@ -153,7 +153,7 @@ function RecentPhotoCard({ photo }: { photo: Photo }) {
             <span>{format(new Date(photo.dateAdded), 'MMM d, yyyy')}</span>
           </div>
           <Link 
-            href={`/portfolio`} 
+            href={`/portfolio?photo=${photo.id}`} 
             className="text-white font-medium text-sm flex items-center hover:underline"
           >
             View Photo <FiImage className="ml-1" />

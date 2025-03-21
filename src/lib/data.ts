@@ -9,6 +9,17 @@ export type Photo = {
   dateAdded: string; // ISO date string
 };
 
+export type BlogPost = {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage: string;
+  relatedPhotoId?: string; // Optional reference to a photo
+  date: string; // ISO date string
+  author: string;
+};
+
 // Updated categories to include Italy and Travel
 export const photoCategories = ["All", "Mountains", "Deserts", "Forests", "Oceans", "Night Sky", "Italy", "Travel"];
 

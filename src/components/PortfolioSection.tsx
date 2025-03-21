@@ -19,11 +19,19 @@ export default function PortfolioSection() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isHomepage, setIsHomepage] = useState(false);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
 
   // Check if we're on the homepage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsHomepage(window.location.pathname === '/');
+      
+      // Check for photo ID in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const photoId = urlParams.get('photo');
+      if (photoId) {
+        setSelectedPhotoId(photoId);
+      }
     }
   }, []);
 
@@ -160,7 +168,7 @@ export default function PortfolioSection() {
                 transition={{ duration: 0.5 }}
                 className="mb-4"
               >
-                <PhotoItem item={item} />
+                <PhotoItem item={item} selectedPhotoId={selectedPhotoId} />
               </motion.div>
             ))}
           </Masonry>
@@ -177,7 +185,7 @@ export default function PortfolioSection() {
   );
 }
 
-function PhotoItem({ item }: { item: Photo }) {
+function PhotoItem({ item, selectedPhotoId }: { item: Photo, selectedPhotoId: string | null }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   // Default to assuming landscape orientation
   const [isPortrait, setIsPortrait] = useState(false);
@@ -203,6 +211,13 @@ function PhotoItem({ item }: { item: Photo }) {
       checkImageOrientation();
     }
   }, [item.image]);
+
+  // Auto-open dialog if this item matches the selected photo ID
+  useEffect(() => {
+    if (selectedPhotoId && selectedPhotoId === item.id) {
+      setIsDialogOpen(true);
+    }
+  }, [selectedPhotoId, item.id]);
 
   // Track photo view event when dialog opens
   useEffect(() => {

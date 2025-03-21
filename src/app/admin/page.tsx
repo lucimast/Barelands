@@ -6,13 +6,15 @@ import { redirect } from 'next/navigation';
 import AdminHeader from '@/components/AdminHeader';
 import PhotoUploadForm from '@/components/PhotoUploadForm';
 import AdminPhotoGallery from '@/components/AdminPhotoGallery';
-import { Photo } from '@/lib/data';
+import BlogPostForm from '@/components/BlogPostForm';
+import { Photo, BlogPost } from '@/lib/data';
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('upload');
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
 
   // Fetch photos when component mounts - keeping this useEffect before any conditional returns
   useEffect(() => {
@@ -52,6 +54,11 @@ export default function AdminPage() {
     setPhotos(prevPhotos => [newPhoto, ...prevPhotos]);
   };
 
+  // Handle successful blog post creation
+  const handleBlogPostAdded = (newBlogPost: BlogPost) => {
+    setBlogPosts(prevPosts => [newBlogPost, ...prevPosts]);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminHeader />
@@ -81,6 +88,16 @@ export default function AdminPage() {
             >
               Manage Photos
             </button>
+            <button
+              className={`px-4 py-2 font-medium ${
+                activeTab === 'blog'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('blog')}
+            >
+              Add Blog Post
+            </button>
           </div>
         </div>
 
@@ -89,13 +106,23 @@ export default function AdminPage() {
             <h2 className="text-xl font-semibold mb-4">Upload New Photo</h2>
             <PhotoUploadForm onPhotoAdded={handlePhotoAdded} />
           </div>
-        ) : (
+        ) : activeTab === 'manage' ? (
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Manage Photos</h2>
             {isLoading ? (
               <p>Loading photos...</p>
             ) : (
               <AdminPhotoGallery photos={photos} />
+            )}
+          </div>
+        ) : (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Create Blog Post</h2>
+            <p className="text-gray-600 mb-4">Create a new blog post that can optionally be linked to one of your photos.</p>
+            {isLoading ? (
+              <p>Loading photos...</p>
+            ) : (
+              <BlogPostForm onBlogPostAdded={handleBlogPostAdded} photos={photos} />
             )}
           </div>
         )}
