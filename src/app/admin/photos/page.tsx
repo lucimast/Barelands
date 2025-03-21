@@ -48,7 +48,7 @@ export default function ManagePhotos() {
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Manage Photos</h1>
+          <h1 className="text-2xl font-bold text-red-500">Manage Photos</h1>
           <p className="text-zinc-400">
             Upload, edit, and organize your portfolio photographs
           </p>

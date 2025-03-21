@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -38,8 +38,10 @@ type FormValues = z.infer<typeof formSchema>;
 export default function BuyPrintPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [activeTab, setActiveTab] = useState<"gallery" | "inquiry">("gallery");
+  const [photoOrientations, setPhotoOrientations] = useState<Record<string, 'portrait' | 'landscape'>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("gallery");
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
   
   // Create refs for the tabs
   const galleryTabRef = useRef<HTMLButtonElement>(null);
@@ -57,10 +59,39 @@ export default function BuyPrintPage() {
     },
   });
 
-  // Filter photos by category
-  const filteredPhotos = selectedCategory === "All"
-    ? photos
-    : photos.filter(photo => photo.category === selectedCategory);
+  // Filter photos based on selected category
+  const filteredPhotos = useMemo(() => {
+    if (selectedCategory === "All") return photos;
+    return photos.filter(photo => photo.category === selectedCategory);
+  }, [selectedCategory]);
+
+  // Detect photo orientations
+  useEffect(() => {
+    const detectOrientations = async () => {
+      const orientations: Record<string, 'portrait' | 'landscape'> = {};
+      
+      const promises = photos.map(photo => {
+        return new Promise<void>((resolve) => {
+          const img = document.createElement('img');
+          img.onload = () => {
+            orientations[photo.id] = img.height > img.width ? 'portrait' : 'landscape';
+            resolve();
+          };
+          img.onerror = () => {
+            // Default to landscape on error
+            orientations[photo.id] = 'landscape';
+            resolve();
+          };
+          img.src = photo.image;
+        });
+      });
+      
+      await Promise.all(promises);
+      setPhotoOrientations(orientations);
+    };
+    
+    detectOrientations();
+  }, [photos]);
 
   // Handle photo selection
   const handlePhotoSelect = (photo: Photo) => {
@@ -101,9 +132,14 @@ export default function BuyPrintPage() {
 
   // Function to switch to inquiry tab
   const switchToInquiryTab = () => {
-    setActiveTab("inquiry");
-    if (inquiryTabRef.current) {
-      inquiryTabRef.current.click();
+    // Redirect to contact page with prefilled information about the selected photo
+    if (selectedPhoto) {
+      const queryParams = new URLSearchParams({
+        subject: `Print Inquiry: ${selectedPhoto.title}`,
+        message: `I'm interested in purchasing a print of "${selectedPhoto.title}" (${selectedPhoto.location}). Please provide me with details on available sizes, pricing, and shipping options.`
+      }).toString();
+      
+      window.location.href = `/contact?${queryParams}`;
     }
   };
 
@@ -142,20 +178,26 @@ export default function BuyPrintPage() {
             </p>
           </motion.div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs 
+            defaultValue="gallery" 
+            value={activeTab} 
+            onValueChange={(value) => setActiveTab(value as "gallery" | "inquiry")}
+            className="space-y-6"
+          >
+            <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto">
               <TabsTrigger 
                 ref={galleryTabRef}
-                value="gallery"
+                value="gallery" 
+                className="rounded-l-md data-[state=active]:bg-white data-[state=active]:text-zinc-900"
               >
-                Browse Gallery
+                Print Gallery
               </TabsTrigger>
               <TabsTrigger 
                 ref={inquiryTabRef}
                 value="inquiry" 
-                disabled={!selectedPhoto}
+                className="rounded-r-md data-[state=active]:bg-white data-[state=active]:text-zinc-900"
               >
-                Make Inquiry
+                Print Inquiry
               </TabsTrigger>
             </TabsList>
 
@@ -193,7 +235,7 @@ export default function BuyPrintPage() {
                     onClick={() => handlePhotoSelect(photo)}
                   >
                     {/* Use dynamic aspect ratio based on orientation */}
-                    <div className="relative w-full" style={{ paddingBottom: "75%" }}>
+                    <div className={`relative w-full ${photoOrientations[photo.id] === 'portrait' ? 'aspect-[3/4]' : 'aspect-[4/3]'}`}>
                       <Image
                         src={photo.image}
                         alt={photo.title}
@@ -222,48 +264,27 @@ export default function BuyPrintPage() {
 
               {/* Selected Photo Details */}
               {selectedPhoto && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 p-6 bg-zinc-900 rounded-lg border border-zinc-800"
-                >
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-1/3 relative aspect-auto rounded overflow-hidden" style={{ minHeight: "200px" }}>
-                      <Image
-                        src={selectedPhoto.image}
-                        alt={selectedPhoto.title}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                    <div className="w-full md:w-2/3">
-                      <h3 className="text-2xl font-bold mb-2">
-                        {selectedPhoto.title}
-                      </h3>
-                      <p className="text-zinc-400 mb-3">
-                        Location: {selectedPhoto.location}
-                      </p>
-                      <p className="text-zinc-300 mb-5">
-                        {selectedPhoto.description}
-                      </p>
-                      <div className="space-y-2">
-                        <h4 className="font-medium">Available Print Options:</h4>
-                        <ul className="text-zinc-300 space-y-1">
-                          <li>• Premium Fine Art Paper (Matte or Glossy)</li>
-                          <li>• Gallery-Quality Canvas</li>
-                          <li>• Metal Prints (Aluminum)</li>
-                          <li>• Framing Options Available</li>
-                        </ul>
-                      </div>
-                      <Button
-                        className="mt-5"
-                        onClick={switchToInquiryTab}
-                      >
-                        Inquire About This Print
-                      </Button>
-                    </div>
+                <div className="space-y-6">
+                  <div className={`relative rounded-lg overflow-hidden w-full ${photoOrientations[selectedPhoto.id] === 'portrait' ? 'aspect-[3/4]' : 'aspect-[4/3]'} mb-6`}>
+                    <Image
+                      src={selectedPhoto.image}
+                      alt={selectedPhoto.title}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                </motion.div>
+                  <h3 className="text-xl font-bold">{selectedPhoto.title}</h3>
+                  <p className="text-zinc-400">{selectedPhoto.location}</p>
+                  <p className="text-zinc-300">{selectedPhoto.description}</p>
+                  <div className="pt-4 border-t border-zinc-800">
+                    <Button
+                      onClick={switchToInquiryTab}
+                      className="w-full bg-white text-zinc-900 hover:bg-zinc-200"
+                    >
+                      Enquire About This Print
+                    </Button>
+                  </div>
+                </div>
               )}
             </TabsContent>
 

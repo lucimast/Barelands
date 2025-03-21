@@ -8,6 +8,8 @@ import { photos, Photo } from '@/lib/data';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: "Barelands | Landscape Photography",
@@ -120,7 +122,9 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${GeistSans.className} antialiased bg-zinc-900 text-zinc-100`}>
         <Providers>
+          <Navbar />
           {children}
+          <Footer />
           <Analytics />
         </Providers>
       </body>

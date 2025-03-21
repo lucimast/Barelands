@@ -16,58 +16,144 @@ export default function HeroSection() {
   const [slideshowPhotos, setSlideshowPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [photoOrientations, setPhotoOrientations] = useState<Record<string, 'portrait' | 'landscape'>>({});
 
   // Initialize slideshow photos and handle updates
   useEffect(() => {
     // Function to get featured photos for the slideshow
-    const getFeatureFeaturedPhotos = () => {
-      // Since we're on the client side, we can't check file existence
-      // Use client-safe filtering that will be handled in the filterValidPhotos function
-      const validPhotos = filterValidPhotos(photos);
-      
-      // Filter out photos with failed images during runtime
-      const usablePhotos = validPhotos.filter(photo => !failedImages.has(photo.image));
-      
-      if (usablePhotos.length === 0) {
-        console.warn('No valid photos found for slideshow');
+    const getFeaturedPhotos = async () => {
+      try {
+        // Fetch photos from API instead of using static import
+        const response = await fetch('/api/photos');
+        if (!response.ok) {
+          throw new Error('Failed to fetch photos');
+        }
+        
+        const photosData = await response.json();
+        
+        // Since we're on the client side, we can't check file existence
+        // Use client-safe filtering that will be handled in the filterValidPhotos function
+        const validPhotos = filterValidPhotos(photosData);
+        
+        // Filter out photos with failed images during runtime
+        const usablePhotos = validPhotos.filter(photo => !failedImages.has(photo.image));
+        
+        if (usablePhotos.length === 0) {
+          console.warn('No valid photos found for slideshow');
+          return [];
+        }
+        
+        // Primary preference: specific named photos if they exist
+        const preferredPhotos = [
+          // Find the Cuernos Del Paine Beach photo
+          usablePhotos.find(photo => photo.title.includes("Cuernos Del Paine")),
+          // Find the Iguazu Falls photo
+          usablePhotos.find(photo => photo.title.includes("Iguazu")),
+          // Find the Kallur Lighthouse photo with ducks
+          usablePhotos.find(photo => photo.title.includes("Kallur") && photo.description?.includes("ducks"))
+        ].filter(Boolean) as Photo[];
+        
+        // If we have at least 3 preferred photos, use them
+        if (preferredPhotos.length >= 3) {
+          return preferredPhotos;
+        }
+        
+        // Otherwise, fall back to any featured photos
+        const featuredPhotos = usablePhotos.filter(photo => photo.featured).slice(0, 3);
+        if (featuredPhotos.length > 0) {
+          return featuredPhotos;
+        }
+        
+        // Final fallback: just use the first 3 valid photos
+        return usablePhotos.slice(0, Math.min(3, usablePhotos.length));
+      } catch (error) {
+        console.error("Error fetching featured photos:", error);
         return [];
       }
-      
-      // Primary preference: specific named photos if they exist
-      const preferredPhotos = [
-        // Find the Cuernos Del Paine Beach photo
-        usablePhotos.find(photo => photo.title.includes("Cuernos Del Paine")),
-        // Find the Iguazu Falls photo
-        usablePhotos.find(photo => photo.title.includes("Iguazu")),
-        // Find the Kallur Lighthouse photo with ducks
-        usablePhotos.find(photo => photo.title.includes("Kallur") && photo.description?.includes("ducks"))
-      ].filter(Boolean) as Photo[];
-      
-      // If we have at least 3 preferred photos, use them
-      if (preferredPhotos.length >= 3) {
-        return preferredPhotos;
-      }
-      
-      // Otherwise, fall back to any featured photos
-      const featuredPhotos = usablePhotos.filter(photo => photo.featured).slice(0, 3);
-      if (featuredPhotos.length > 0) {
-        return featuredPhotos;
-      }
-      
-      // Final fallback: just use the first 3 valid photos
-      return usablePhotos.slice(0, Math.min(3, usablePhotos.length));
     };
     
     // Set the slideshow photos
-    const selectedPhotos = getFeatureFeaturedPhotos();
-    setSlideshowPhotos(selectedPhotos);
-    setIsLoading(false);
+    const fetchData = async () => {
+      const selectedPhotos = await getFeaturedPhotos();
+      setSlideshowPhotos(selectedPhotos);
+      setIsLoading(false);
+      
+      // Reset current slide if it's now out of bounds
+      if (currentSlide >= selectedPhotos.length) {
+        setCurrentSlide(0);
+      }
+    };
     
-    // Reset current slide if it's now out of bounds
-    if (currentSlide >= selectedPhotos.length) {
-      setCurrentSlide(0);
-    }
-  }, [photos, currentSlide, failedImages]); // Re-run when photos array or failed images change
+    fetchData();
+  }, [currentSlide, failedImages]);
+
+  // Add a separate effect to refetch when URL changes (which happens after revalidation)
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    const fetchPhotos = async () => {
+      try {
+        const response = await fetch('/api/photos');
+        if (!response.ok) return;
+        
+        const photosData = await response.json();
+        const validPhotos = filterValidPhotos(photosData);
+        const featuredPhotos = validPhotos.filter(photo => photo.featured).slice(0, 3);
+        
+        if (featuredPhotos.length > 0) {
+          setSlideshowPhotos(featuredPhotos);
+        }
+      } catch (error) {
+        console.error("Error refetching photos:", error);
+      }
+    };
+    
+    // Add event listener for page visibility to refetch when user returns to tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchPhotos();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Initial fetch
+    fetchPhotos();
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isMounted]);
+
+  // Detect photo orientations
+  useEffect(() => {
+    if (slideshowPhotos.length === 0) return;
+    
+    const detectOrientations = async () => {
+      const orientations: Record<string, 'portrait' | 'landscape'> = {};
+      
+      const promises = slideshowPhotos.map(photo => {
+        return new Promise<void>((resolve) => {
+          const img = document.createElement('img');
+          img.onload = () => {
+            orientations[photo.id] = img.height > img.width ? 'portrait' : 'landscape';
+            resolve();
+          };
+          img.onerror = () => {
+            // Default to landscape on error
+            orientations[photo.id] = 'landscape';
+            resolve();
+          };
+          img.src = photo.image;
+        });
+      });
+      
+      await Promise.all(promises);
+      setPhotoOrientations(orientations);
+    };
+    
+    detectOrientations();
+  }, [slideshowPhotos]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -171,7 +257,7 @@ export default function HeroSection() {
               fill
               sizes="100vw"
               priority={currentSlide === 0}
-              className="object-cover"
+              className={`${photoOrientations[currentPhoto.id] === 'portrait' ? 'object-contain' : 'object-cover'}`}
               onError={() => handleImageError(currentPhoto.image)}
             />
             <div className="absolute inset-0 bg-black/30" />
@@ -188,7 +274,7 @@ export default function HeroSection() {
         >
           <h1 className="text-5xl md:text-7xl font-bold mb-6">Barelands</h1>
           <p className="text-xl md:text-2xl mb-8">
-            Breathtaking landscape photography from around the world
+            Looking Farther to Look Deeper
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200">

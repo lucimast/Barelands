@@ -14,6 +14,30 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('upload');
 
+  // Fetch photos when component mounts - keeping this useEffect before any conditional returns
+  useEffect(() => {
+    // Only fetch if authenticated
+    if (status === 'authenticated') {
+      const fetchPhotos = async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetch('/api/photos');
+          if (!response.ok) {
+            throw new Error('Failed to fetch photos');
+          }
+          const data = await response.json();
+          setPhotos(data);
+        } catch (error) {
+          console.error('Error fetching photos:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchPhotos();
+    }
+  }, [status]);
+
   // Check authentication
   if (status === 'loading') {
     return <div className="container mx-auto p-6">Loading...</div>;
@@ -22,27 +46,6 @@ export default function AdminPage() {
   if (status === 'unauthenticated') {
     redirect('/login');
   }
-
-  useEffect(() => {
-    // Fetch photos when component mounts
-    const fetchPhotos = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/photos');
-        if (!response.ok) {
-          throw new Error('Failed to fetch photos');
-        }
-        const data = await response.json();
-        setPhotos(data);
-      } catch (error) {
-        console.error('Error fetching photos:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPhotos();
-  }, []);
 
   // Handle successful photo upload
   const handlePhotoAdded = (newPhoto: Photo) => {

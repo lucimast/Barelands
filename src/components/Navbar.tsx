@@ -53,7 +53,7 @@ export default function Navbar() {
           <NavLink href="/portfolio">Portfolio</NavLink>
           <NavLink href="/news">News</NavLink>
           <NavLink href="/prints">Buy a Print</NavLink>
-          <NavLink href="/#contact">Contact</NavLink>
+          <NavLink href="/contact">Contact</NavLink>
         </nav>
 
         {/* Mobile Menu Button */}
@@ -108,7 +108,7 @@ export default function Navbar() {
                 Buy a Print
               </MobileNavLink>
               <MobileNavLink
-                href="/#contact"
+                href="/contact"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Contact

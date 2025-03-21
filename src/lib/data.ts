@@ -121,13 +121,9 @@ export type AboutInfo = {
 
 // Updated personal details
 export const aboutInfo: AboutInfo = {
-  name: "@mybarelands",
+  name: "Barelands",
   title: "Landscape Photography",
-  bio: [
-    "Exploring Barelands",
-    "Looking Farther to Look Deeper",
-    "Fine art landscape photography capturing the beauty of remote locations around the world."
-  ],
+  bio: [],
   avatar: "/avatar.jpg",
   socialLinks: {
     instagram: "https://instagram.com/mybarelands",

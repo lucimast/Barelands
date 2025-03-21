@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FiInstagram, FiTwitter, FiFacebook, FiLock } from "react-icons/fi";
+import { FiInstagram, FiLock } from "react-icons/fi";
 import { useState, useEffect } from "react";
 
 export default function Footer() {
@@ -32,21 +32,21 @@ export default function Footer() {
             <Link href="/#about" className="text-sm text-zinc-400 hover:text-white transition-colors">
               Who I Am
             </Link>
-            <Link href="/#portfolio" className="text-sm text-zinc-400 hover:text-white transition-colors">
+            <Link href="/portfolio" className="text-sm text-zinc-400 hover:text-white transition-colors">
               Portfolio
             </Link>
-            <Link href="/#news" className="text-sm text-zinc-400 hover:text-white transition-colors">
+            <Link href="/news" className="text-sm text-zinc-400 hover:text-white transition-colors">
               News
             </Link>
-            <Link href="/#prints" className="text-sm text-zinc-400 hover:text-white transition-colors">
+            <Link href="/prints" className="text-sm text-zinc-400 hover:text-white transition-colors">
               Buy a Print
             </Link>
-            <Link href="/#contact" className="text-sm text-zinc-400 hover:text-white transition-colors">
+            <Link href="/contact" className="text-sm text-zinc-400 hover:text-white transition-colors">
               Contact
             </Link>
           </nav>
 
-          {/* Social Links */}
+          {/* Social Links - Only Instagram */}
           <div className="flex space-x-4">
             <a
               href="https://instagram.com/mybarelands"
@@ -56,24 +56,6 @@ export default function Footer() {
               aria-label="Instagram"
             >
               <FiInstagram className="h-5 w-5" />
-            </a>
-            <a
-              href="https://twitter.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-zinc-400 hover:text-white transition-colors"
-              aria-label="Twitter"
-            >
-              <FiTwitter className="h-5 w-5" />
-            </a>
-            <a
-              href="https://facebook.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-zinc-400 hover:text-white transition-colors"
-              aria-label="Facebook"
-            >
-              <FiFacebook className="h-5 w-5" />
             </a>
           </div>
         </div>

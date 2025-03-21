@@ -1,10 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Photo, photoCategories } from '@/lib/data';
 import { toast } from 'sonner';
-import { FiTrash2, FiStar, FiRefreshCw, FiCheck, FiAlertTriangle } from 'react-icons/fi';
+import { FiTrash2, FiStar, FiRefreshCw, FiCheck, FiAlertTriangle, FiEdit } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface AdminPhotoGalleryProps {
   photos: Photo[];
@@ -16,6 +20,40 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [photoOrientations, setPhotoOrientations] = useState<Record<string, 'portrait' | 'landscape'>>({});
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Detect image orientations when photos change
+  useEffect(() => {
+    const detectOrientations = async () => {
+      const orientations: Record<string, 'portrait' | 'landscape'> = {};
+      
+      // Create a promise for each photo to check orientation
+      const promises = photos.map(photo => {
+        return new Promise<void>((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            orientations[photo.id] = img.height > img.width ? 'portrait' : 'landscape';
+            resolve();
+          };
+          img.onerror = () => {
+            // Default to landscape on error
+            orientations[photo.id] = 'landscape';
+            resolve();
+          };
+          img.src = photo.image;
+        });
+      });
+      
+      // Wait for all images to be processed
+      await Promise.all(promises);
+      setPhotoOrientations(orientations);
+    };
+    
+    detectOrientations();
+  }, [photos]);
 
   // Filter photos by category
   const filterPhotosByCategory = (category: string) => {
@@ -67,16 +105,28 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
   // Toggle the featured status of a photo
   const toggleFeatured = async (photoId: string) => {
     try {
+      console.log('Sending feature toggle request for photo:', photoId);
+      
       const response = await fetch('/api/photos/feature', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ photoId }),
+        credentials: 'include', // Including credentials for authentication
       });
       
+      console.log('Feature toggle response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to update featured status');
+        const errorData = await response.json().catch(e => ({ error: 'Could not parse error response' }));
+        console.error('Feature toggle error data:', errorData);
+        
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please log in again.');
+        }
+        
+        throw new Error(errorData.error || `Failed to update featured status (Status: ${response.status})`);
       }
       
       // Update local state
@@ -95,10 +145,15 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
         setDisplayedPhotos(updatedPhotos.filter(p => p.category === selectedCategory));
       }
       
-      toast.success('Featured status updated');
+      toast('Featured status updated', {
+        description: 'The photo featured status has been updated.',
+      });
     } catch (error) {
       console.error('Error updating featured status:', error);
-      toast.error('Failed to update featured status');
+      toast('Error', {
+        description: error instanceof Error ? error.message : 'Failed to update featured status',
+        style: { background: 'red', color: 'white' },
+      });
     }
   };
 
@@ -113,6 +168,7 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ id: photoId }),
+          credentials: 'include', // Including credentials for authentication
         });
         
         if (!response.ok) {
@@ -130,13 +186,84 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
           setDisplayedPhotos(updatedPhotos.filter(p => p.category === selectedCategory));
         }
         
-        toast.success('Photo deleted successfully');
+        toast('Success', {
+          description: 'Photo deleted successfully',
+        });
       } catch (error) {
         console.error('Error deleting photo:', error);
-        toast.error('Failed to delete photo');
+        toast('Error', {
+          description: 'Failed to delete photo',
+          style: { background: 'red', color: 'white' },
+        });
       } finally {
         setIsDeleting(null);
       }
+    }
+  };
+
+  // Open edit dialog
+  const openEditDialog = (photo: Photo) => {
+    setEditingPhoto({ ...photo });
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle edit form input changes
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    if (!editingPhoto) return;
+    const { name, value } = e.target;
+    setEditingPhoto(prev => prev ? { ...prev, [name]: value } : null);
+  };
+
+  // Save edited photo
+  const saveEditedPhoto = async () => {
+    if (!editingPhoto) return;
+    
+    setIsSaving(true);
+    
+    try {
+      const response = await fetch('/api/photos/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editingPhoto),
+        credentials: 'include', // Including credentials for authentication
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update photo');
+      }
+      
+      // Update the photo in the local state
+      setPhotos(photos.map(photo => 
+        photo.id === editingPhoto.id ? editingPhoto : photo
+      ));
+      
+      // Update displayed photos based on the current filter
+      const updatedPhotos = photos.map(photo => 
+        photo.id === editingPhoto.id ? editingPhoto : photo
+      );
+      
+      if (selectedCategory === 'All') {
+        setDisplayedPhotos(updatedPhotos);
+      } else {
+        setDisplayedPhotos(updatedPhotos.filter(p => p.category === selectedCategory));
+      }
+      
+      toast('Photo updated successfully', {
+        description: 'The photo details have been updated',
+      });
+      
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating photo:', error);
+      toast('Error updating photo', {
+        description: error instanceof Error ? error.message : "Failed to update photo",
+        style: { background: 'red', color: 'white' },
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -152,7 +279,7 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
           <Button 
             onClick={syncPhotos} 
             disabled={isSyncing}
-            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700"
+            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-red-500"
           >
             {isSyncing ? (
               <>
@@ -172,7 +299,7 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
           <select
             value={selectedCategory}
             onChange={(e) => filterPhotosByCategory(e.target.value)}
-            className="px-4 py-2 rounded-md bg-zinc-800 border-none"
+            className="px-4 py-2 rounded-md bg-zinc-800 border-none text-red-500"
           >
             {photoCategories.map((category) => (
               <option key={category} value={category}>
@@ -184,7 +311,7 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
       </div>
       
       {/* Photos count summary */}
-      <div className="text-sm text-zinc-400">
+      <div className="text-sm text-red-500">
         Displaying {displayedPhotos.length} photo{displayedPhotos.length !== 1 ? 's' : ''} 
         {selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}
         {' '} (Total: {photos.length})
@@ -204,7 +331,7 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
           {displayedPhotos.map((photo) => (
             <div key={photo.id} className="relative group overflow-hidden rounded-lg">
               {/* Photo */}
-              <div className="relative aspect-[4/3] bg-zinc-800">
+              <div className={`relative ${photoOrientations[photo.id] === 'portrait' ? 'aspect-[3/4]' : 'aspect-[4/3]'} bg-zinc-800`}>
                 <img 
                   src={photo.image} 
                   alt={photo.title}
@@ -226,6 +353,14 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
                     {photo.category}
                   </span>
                   <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openEditDialog(photo)}
+                      className="p-1 h-8 w-8"
+                    >
+                      <FiEdit />
+                    </Button>
                     <Button
                       size="sm"
                       variant={photo.featured ? "secondary" : "outline"}
@@ -256,6 +391,109 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
           ))}
         </div>
       )}
+
+      {/* Edit Photo Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-zinc-900 border-zinc-800">
+          <DialogHeader>
+            <DialogTitle>Edit Photo Details</DialogTitle>
+          </DialogHeader>
+          
+          {editingPhoto && (
+            <div className="space-y-4 py-2">
+              <div className="mb-4 relative w-32 h-32 mx-auto overflow-hidden rounded-md">
+                <img 
+                  src={editingPhoto.image} 
+                  alt={editingPhoto.title || 'Photo preview'}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  value={editingPhoto.title}
+                  onChange={handleEditChange}
+                  className="bg-zinc-800 border-zinc-700"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <select
+                  id="category"
+                  name="category"
+                  value={editingPhoto.category}
+                  onChange={handleEditChange}
+                  className="w-full rounded-md bg-zinc-800 border-zinc-700 text-zinc-100 p-2"
+                >
+                  {photoCategories
+                    .filter(category => category !== "All")
+                    .map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  name="location"
+                  value={editingPhoto.location}
+                  onChange={handleEditChange}
+                  className="bg-zinc-800 border-zinc-700"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={editingPhoto.description}
+                  onChange={handleEditChange}
+                  className="resize-none bg-zinc-800 border-zinc-700 min-h-[100px]"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="featured" className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="featured"
+                    name="featured"
+                    checked={!!editingPhoto.featured}
+                    onChange={(e) => setEditingPhoto({
+                      ...editingPhoto,
+                      featured: e.target.checked
+                    })}
+                    className="rounded border-zinc-700 bg-zinc-800"
+                  />
+                  <span>Featured Photo</span>
+                </Label>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" className="border-zinc-700">Cancel</Button>
+            </DialogClose>
+            <Button 
+              onClick={saveEditedPhoto} 
+              disabled={isSaving}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

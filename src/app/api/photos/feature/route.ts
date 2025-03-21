@@ -37,16 +37,16 @@ async function savePhotoData(photoData: Photo[]): Promise<boolean> {
   }
 }
 
-// Revalidate all relevant pages to update the UI
-async function revalidateAllPages(baseUrl: string) {
-  const pagesToRevalidate = ['/', '/admin', '/news', '/prints', '/portfolio'];
+// Revalidate all relevant paths directly
+function revalidateAllPaths() {
+  const paths = ['/', '/admin', '/news', '/prints', '/portfolio'];
   
-  for (const page of pagesToRevalidate) {
+  for (const path of paths) {
     try {
-      await fetch(`${baseUrl}/api/revalidate?path=${page}&secret=barelands_secret_key`);
-      console.log(`Revalidated path: ${page}`);
+      revalidatePath(path);
+      console.log(`Revalidated path: ${path}`);
     } catch (error) {
-      console.error(`Failed to revalidate path ${page}:`, error);
+      console.error(`Failed to revalidate path ${path}:`, error);
     }
   }
 }
@@ -54,14 +54,22 @@ async function revalidateAllPages(baseUrl: string) {
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
+    console.log('Checking authentication for feature toggle request');
     const session = await getServerSession(authOptions);
+    console.log('Session check result:', session ? 'Authenticated' : 'Not authenticated');
+    
     if (!session) {
+      console.log('Authentication failed for feature toggle request');
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
+
+    console.log('User authenticated:', session.user?.email);
 
     // Parse request body to get photo ID
     const body = await request.json();
     const { photoId } = body;
+
+    console.log('Attempting to toggle featured status for photo:', photoId);
 
     if (!photoId) {
       return NextResponse.json(
@@ -103,8 +111,8 @@ export async function POST(request: NextRequest) {
       await savePhotoData(storedPhotos);
     }
 
-    // Revalidate all pages to refresh the UI
-    await revalidateAllPages(request.nextUrl.origin);
+    // Directly revalidate all paths
+    revalidateAllPaths();
 
     return NextResponse.json({
       success: true,

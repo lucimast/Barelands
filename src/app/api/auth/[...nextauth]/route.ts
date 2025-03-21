@@ -85,6 +85,18 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
+  // Ensure cookies are properly configured for cross-site usage
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
 };
 
 const handler = NextAuth(authOptions);

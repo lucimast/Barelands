@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Portfolio | Barelands Photography",
-  description: "Explore our collection of landscape photographs from around the world."
+  description: "A collection of my finest landscape photographs from around the world, each capturing a unique moment in time"
 };
 
 export default function PortfolioPage() {

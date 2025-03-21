@@ -75,6 +75,7 @@ export default function PhotoUploadForm({ onPhotoAdded }: PhotoUploadFormProps) 
       const response = await fetch('/api/photos/upload', {
         method: 'POST',
         body: formData,
+        credentials: 'include',
       });
       
       if (!response.ok) {
