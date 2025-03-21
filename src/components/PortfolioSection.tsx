@@ -32,13 +32,16 @@ export default function PortfolioSection() {
         
         const data = await response.json();
         const validPhotos = filterValidPhotos(data);
-        setAllPhotos(validPhotos);
+        
+        // Filter to only include featured photos for the homepage portfolio section
+        const featuredPhotos = validPhotos.filter(photo => photo.featured);
+        setAllPhotos(featuredPhotos);
         
         // Apply category filter
         if (activeCategory === "All") {
-          setFilteredItems(validPhotos);
+          setFilteredItems(featuredPhotos);
         } else {
-          setFilteredItems(validPhotos.filter((photo) => photo.category === activeCategory));
+          setFilteredItems(featuredPhotos.filter((photo) => photo.category === activeCategory));
         }
         
         setError(null);

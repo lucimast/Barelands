@@ -20,19 +20,16 @@ export default function HeroSection() {
 
   // Initialize slideshow photos and handle updates
   useEffect(() => {
-    // Function to get featured photos for the slideshow
-    const getFeaturedPhotos = async () => {
+    // Function to get photos for the slideshow - specifically Kallur, Patagonia and Iguazu
+    const getSpecificPhotos = async () => {
       try {
-        // Fetch photos from API instead of using static import
+        // Fetch photos from API
         const response = await fetch('/api/photos');
         if (!response.ok) {
           throw new Error('Failed to fetch photos');
         }
         
         const photosData = await response.json();
-        
-        // Since we're on the client side, we can't check file existence
-        // Use client-safe filtering that will be handled in the filterValidPhotos function
         const validPhotos = filterValidPhotos(photosData);
         
         // Filter out photos with failed images during runtime
@@ -43,22 +40,22 @@ export default function HeroSection() {
           return [];
         }
         
-        // Primary preference: specific named photos if they exist
-        const preferredPhotos = [
-          // Find the Cuernos Del Paine Beach photo
+        // SPECIFICALLY look for these three photos by title as requested by the user
+        const specificPhotos = [
+          // Find the Kallur Lighthouse photo
+          usablePhotos.find(photo => photo.title.includes("Kallur")),
+          // Find the Cuernos Del Paine (Patagonia) photo
           usablePhotos.find(photo => photo.title.includes("Cuernos Del Paine")),
           // Find the Iguazu Falls photo
-          usablePhotos.find(photo => photo.title.includes("Iguazu")),
-          // Find the Kallur Lighthouse photo with ducks
-          usablePhotos.find(photo => photo.title.includes("Kallur") && photo.description?.includes("ducks"))
+          usablePhotos.find(photo => photo.title.includes("Iguazu"))
         ].filter(Boolean) as Photo[];
         
-        // If we have at least 3 preferred photos, use them
-        if (preferredPhotos.length >= 3) {
-          return preferredPhotos;
+        // If we have at least one of the specified photos, return what we found
+        if (specificPhotos.length > 0) {
+          return specificPhotos;
         }
         
-        // Otherwise, fall back to any featured photos
+        // Fallback: use featured photos if we couldn't find the specific ones
         const featuredPhotos = usablePhotos.filter(photo => photo.featured).slice(0, 3);
         if (featuredPhotos.length > 0) {
           return featuredPhotos;
@@ -67,14 +64,14 @@ export default function HeroSection() {
         // Final fallback: just use the first 3 valid photos
         return usablePhotos.slice(0, Math.min(3, usablePhotos.length));
       } catch (error) {
-        console.error("Error fetching featured photos:", error);
+        console.error("Error fetching photos:", error);
         return [];
       }
     };
     
     // Set the slideshow photos
     const fetchData = async () => {
-      const selectedPhotos = await getFeaturedPhotos();
+      const selectedPhotos = await getSpecificPhotos();
       setSlideshowPhotos(selectedPhotos);
       setIsLoading(false);
       
@@ -98,10 +95,20 @@ export default function HeroSection() {
         
         const photosData = await response.json();
         const validPhotos = filterValidPhotos(photosData);
-        const featuredPhotos = validPhotos.filter(photo => photo.featured).slice(0, 3);
         
-        if (featuredPhotos.length > 0) {
-          setSlideshowPhotos(featuredPhotos);
+        // SPECIFICALLY look for these three photos by title as requested by the user
+        const specificPhotos = [
+          // Find the Kallur Lighthouse photo
+          validPhotos.find(photo => photo.title.includes("Kallur")),
+          // Find the Cuernos Del Paine (Patagonia) photo
+          validPhotos.find(photo => photo.title.includes("Cuernos Del Paine")),
+          // Find the Iguazu Falls photo
+          validPhotos.find(photo => photo.title.includes("Iguazu"))
+        ].filter(Boolean) as Photo[];
+        
+        // Only update the slideshow if we have at least one of the specified photos
+        if (specificPhotos.length > 0) {
+          setSlideshowPhotos(specificPhotos);
         }
       } catch (error) {
         console.error("Error refetching photos:", error);

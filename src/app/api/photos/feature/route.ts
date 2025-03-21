@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Check if photo exists
     if (inMemoryPhotoIndex === -1 && storedPhotoIndex === -1) {
+      console.log(`Photo not found: ${photoId}`);
       return NextResponse.json(
         { error: 'Photo not found' },
         { status: 404 }
@@ -92,27 +93,32 @@ export async function POST(request: NextRequest) {
     }
 
     let updatedFeaturedStatus = false;
+    const currentFeaturedStatus = inMemoryPhotoIndex !== -1 
+      ? photos[inMemoryPhotoIndex].featured 
+      : storedPhotoIndex !== -1 
+        ? storedPhotos[storedPhotoIndex].featured 
+        : false;
+    
+    console.log(`Current featured status for photo ${photoId}: ${currentFeaturedStatus}`);
+    updatedFeaturedStatus = !currentFeaturedStatus;
+    console.log(`Updating featured status to: ${updatedFeaturedStatus}`);
 
     // Update in-memory array
     if (inMemoryPhotoIndex !== -1) {
-      // Toggle the featured status
-      updatedFeaturedStatus = !photos[inMemoryPhotoIndex].featured;
       photos[inMemoryPhotoIndex].featured = updatedFeaturedStatus;
+      console.log(`Updated in-memory photo ${photoId} featured status to ${updatedFeaturedStatus}`);
     }
 
     // Update JSON storage
     if (storedPhotoIndex !== -1) {
-      // Toggle the featured status, using the value from memory if already updated
-      updatedFeaturedStatus = inMemoryPhotoIndex !== -1 
-        ? updatedFeaturedStatus 
-        : !storedPhotos[storedPhotoIndex].featured;
-      
       storedPhotos[storedPhotoIndex].featured = updatedFeaturedStatus;
       await savePhotoData(storedPhotos);
+      console.log(`Updated stored photo ${photoId} featured status to ${updatedFeaturedStatus}`);
     }
 
     // Directly revalidate all paths
     revalidateAllPaths();
+    console.log(`Revalidated all paths after toggling featured status for photo ${photoId}`);
 
     return NextResponse.json({
       success: true,

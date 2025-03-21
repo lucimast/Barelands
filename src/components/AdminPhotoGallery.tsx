@@ -107,6 +107,13 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
     try {
       console.log('Sending feature toggle request for photo:', photoId);
       
+      // Find current featured state to show accurate feedback
+      const photo = photos.find(p => p.id === photoId);
+      const isCurrentlyFeatured = photo?.featured || false;
+      const newFeaturedState = !isCurrentlyFeatured;
+      
+      console.log(`Current featured state: ${isCurrentlyFeatured}, new state will be: ${newFeaturedState}`);
+      
       const response = await fetch('/api/photos/feature', {
         method: 'POST',
         headers: {
@@ -129,10 +136,17 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
         throw new Error(errorData.error || `Failed to update featured status (Status: ${response.status})`);
       }
       
+      // Get the response data to confirm the new featured state
+      const responseData = await response.json();
+      console.log('Feature toggle response data:', responseData);
+      
+      // Use the confirmed featured state from the server response
+      const confirmedFeaturedState = responseData.featured;
+      
       // Update local state
       const updatedPhotos = photos.map(photo => 
         photo.id === photoId 
-          ? { ...photo, featured: !photo.featured } 
+          ? { ...photo, featured: confirmedFeaturedState } 
           : photo
       );
       
@@ -145,14 +159,23 @@ export default function AdminPhotoGallery({ photos: initialPhotos }: AdminPhotoG
         setDisplayedPhotos(updatedPhotos.filter(p => p.category === selectedCategory));
       }
       
-      toast('Featured status updated', {
-        description: 'The photo featured status has been updated.',
-      });
+      // Show detailed toast messages about the action
+      if (confirmedFeaturedState) {
+        toast.success('Photo added to featured', {
+          description: 'This photo will now appear on the homepage.',
+        });
+      } else {
+        toast.success('Photo removed from featured', {
+          description: 'This photo has been removed from the homepage.',
+        });
+      }
+      
+      // Trigger immediate revalidation to ensure homepage is updated
+      fetch('/api/revalidate?path=/&secret=barelands_secret_key');
     } catch (error) {
       console.error('Error updating featured status:', error);
-      toast('Error', {
+      toast.error('Error updating featured status', {
         description: error instanceof Error ? error.message : 'Failed to update featured status',
-        style: { background: 'red', color: 'white' },
       });
     }
   };

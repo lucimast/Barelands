@@ -5,9 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { photos, type Photo } from "@/lib/data";
+import { type Photo } from "@/lib/data"; // Only import the type, not the static data
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FiCalendar, FiMap, FiImage, FiHome } from "react-icons/fi";
+import { filterValidPhotos } from "@/lib/storage";
 
 // Sample blog posts data
 // In a real implementation, this would come from a CMS or API
@@ -32,14 +33,36 @@ const blogPosts = [
 
 export default function NewsPage() {
   const [recentPhotos, setRecentPhotos] = useState<Photo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Sort photos by date added (descending) and take the 6 most recent
-    const sortedPhotos = [...photos].sort((a, b) => {
-      return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
-    }).slice(0, 6);
+    const fetchPhotos = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch photos from API instead of using static import
+        const response = await fetch('/api/photos');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch photos');
+        }
+        
+        const data = await response.json();
+        const validPhotos = filterValidPhotos(data);
+        
+        // Sort photos by date added (descending) and take the 6 most recent
+        const sortedPhotos = validPhotos.sort((a, b) => {
+          return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
+        }).slice(0, 6);
+        
+        setRecentPhotos(sortedPhotos);
+      } catch (error) {
+        console.error('Error fetching photos:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    setRecentPhotos(sortedPhotos);
+    fetchPhotos();
   }, []);
 
   return (

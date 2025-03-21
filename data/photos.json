@@ -16,7 +16,7 @@
     "image": "/uploads/0c699b59-09d5-498b-96b1-fee1d146d1a8.jpg",
     "description": "Beautiful landscape photograph of Nara Lanterns",
     "location": "Japan",
-    "featured": false,
+    "featured": true,
     "dateAdded": "2025-03-20T09:56:24.784Z"
   },
   {
@@ -41,7 +41,7 @@
   },
   {
     "id": "c5e9bd41-bb7a-4d25-814d-5f36b7a6018a",
-    "title": "A tale of twp",
+    "title": "A tale of two",
     "category": "Oceans",
     "image": "/uploads/ac1d9140-5825-440b-8a0c-221d94a247fa.jpg",
     "description": "A beautiful sunset on the Greek coast",
@@ -66,7 +66,7 @@
     "image": "/uploads/c8715667-721a-465d-bedc-df749afbd870.jpg",
     "description": "Mountain view with wildflowers in the foreground",
     "location": "Dolomites, Italy",
-    "featured": false,
+    "featured": true,
     "dateAdded": "2025-03-20T09:56:24.785Z"
   },
   {
@@ -106,7 +106,7 @@
     "description": "View of a small mountain river in the Cornisello area of the Dolomites in Italy",
     "location": "Laghi di Cornisello (Italy)",
     "image": "/uploads/bc310af3-b169-470e-a594-77dc041b918f.jpg",
-    "featured": false,
+    "featured": true,
     "dateAdded": "2025-03-20T18:53:07.190Z"
   },
   {
@@ -128,5 +128,15 @@
     "image": "/uploads/35336e9b-b895-4264-891e-aa838062007c.jpg",
     "featured": true,
     "dateAdded": "2025-03-21T09:56:14.079Z"
+  },
+  {
+    "id": "41c7deb0-33a8-464c-9498-357107fc419e",
+    "title": "Ancient Times",
+    "category": "Italy",
+    "description": "View of the Roman Forum at Dawn",
+    "location": "Rome, Italy",
+    "image": "/uploads/9843a25d-cbec-49a9-85b9-a4af63261679.jpg",
+    "featured": false,
+    "dateAdded": "2025-03-21T10:24:22.866Z"
   }
 ]
