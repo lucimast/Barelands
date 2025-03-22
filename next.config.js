@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   distDir: "build", // Updated to ensure output directory is 'build'
+  trailingSlash: true, // Add trailing slashes to URLs
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -29,6 +30,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  
+  // Skip trailing slash redirects
+  skipTrailingSlashRedirect: true,
+  skipMiddlewareUrlNormalize: true,
 };
 
 export default nextConfig;
