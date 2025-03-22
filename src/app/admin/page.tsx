@@ -1,132 +1,40 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
-import AdminHeader from '@/components/AdminHeader';
-import PhotoUploadForm from '@/components/PhotoUploadForm';
-import AdminPhotoGallery from '@/components/AdminPhotoGallery';
-import BlogPostForm from '@/components/BlogPostForm';
-import { Photo, BlogPost } from '@/lib/data';
-
 export default function AdminPage() {
-  const { data: session, status } = useSession();
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('upload');
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-
-  // Fetch photos when component mounts - keeping this useEffect before any conditional returns
-  useEffect(() => {
-    // Only fetch if authenticated
-    if (status === 'authenticated') {
-      const fetchPhotos = async () => {
-        setIsLoading(true);
-        try {
-          const response = await fetch('/api/photos');
-          if (!response.ok) {
-            throw new Error('Failed to fetch photos');
-          }
-          const data = await response.json();
-          setPhotos(data);
-        } catch (error) {
-          console.error('Error fetching photos:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchPhotos();
-    }
-  }, [status]);
-
-  // Check authentication
-  if (status === 'loading') {
-    return <div className="container mx-auto p-6">Loading...</div>;
-  }
-
-  if (status === 'unauthenticated') {
-    redirect('/login');
-  }
-
-  // Handle successful photo upload
-  const handlePhotoAdded = (newPhoto: Photo) => {
-    setPhotos(prevPhotos => [newPhoto, ...prevPhotos]);
-  };
-
-  // Handle successful blog post creation
-  const handleBlogPostAdded = (newBlogPost: BlogPost) => {
-    setBlogPosts(prevPosts => [newBlogPost, ...prevPosts]);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminHeader />
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+      <h1 className="text-3xl font-bold mb-6">Admin Login Disabled</h1>
       
-      <main className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+      <div className="max-w-md p-6 bg-zinc-800/30 rounded-lg border border-zinc-700 mb-8">
+        <p className="mb-4">
+          The admin area is not available when deployed on GitHub Pages because GitHub Pages only supports static websites.
+        </p>
         
-        <div className="mb-6">
-          <div className="flex border-b border-gray-200">
-            <button
-              className={`px-4 py-2 font-medium ${
-                activeTab === 'upload'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('upload')}
-            >
-              Upload Photo
-            </button>
-            <button
-              className={`px-4 py-2 font-medium ${
-                activeTab === 'manage'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('manage')}
-            >
-              Manage Photos
-            </button>
-            <button
-              className={`px-4 py-2 font-medium ${
-                activeTab === 'blog'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('blog')}
-            >
-              Add Blog Post
-            </button>
-          </div>
-        </div>
-
-        {activeTab === 'upload' ? (
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Upload New Photo</h2>
-            <PhotoUploadForm onPhotoAdded={handlePhotoAdded} />
-          </div>
-        ) : activeTab === 'manage' ? (
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Manage Photos</h2>
-            {isLoading ? (
-              <p>Loading photos...</p>
-            ) : (
-              <AdminPhotoGallery photos={photos} />
-            )}
-          </div>
-        ) : (
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Create Blog Post</h2>
-            <p className="text-gray-600 mb-4">Create a new blog post that can optionally be linked to one of your photos.</p>
-            {isLoading ? (
-              <p>Loading photos...</p>
-            ) : (
-              <BlogPostForm onBlogPostAdded={handleBlogPostAdded} photos={photos} />
-            )}
-          </div>
-        )}
-      </main>
+        <p className="mb-4">
+          To use the admin features, you need to:
+        </p>
+        
+        <ol className="text-left list-decimal pl-6 mb-4 space-y-2">
+          <li>Run the site locally with <code className="bg-zinc-800 px-1 rounded">npm run dev</code> or <code className="bg-zinc-800 px-1 rounded">bun run dev</code></li>
+          <li>Log in with: 
+            <ul className="list-disc pl-6 mt-1">
+              <li>Email: admin@barelands.vip</li>
+              <li>Password: Lm19421983</li>
+            </ul>
+          </li>
+        </ol>
+        
+        <p>
+          For full functionality including admin features, consider deploying to a platform that supports server-side functionality like Vercel or Netlify.
+        </p>
+      </div>
+      
+      <a 
+        href="/"
+        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+      >
+        Return to Home Page
+      </a>
     </div>
   );
 }

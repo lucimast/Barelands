@@ -9,6 +9,10 @@ import { revalidatePath } from 'next/cache';
 import fsPromises from 'fs/promises';
 import { photoImageExists } from '@/lib/server-storage';
 
+// Add static export configuration
+export const dynamic = 'force-static';
+export const revalidate = false;
+
 // Path to stored photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
 

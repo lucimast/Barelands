@@ -1,119 +1,117 @@
-# Barelands - Landscape Photography Website
+# Landscape Photographer Portfolio
 
-A professional landscape photography website built with Next.js, Tailwind CSS, and TypeScript. This site includes a secure admin panel for managing photos and content.
+A beautiful portfolio website for landscape photographers, built with Next.js, Cloudinary for image management, and deployable to GitHub Pages.
 
 ## Features
 
-- Responsive design optimized for all devices
-- Beautiful photography showcase with masonry grid layout
-- Secure admin panel with NextAuth.js authentication
-- Analytics integration with Vercel Analytics
-- Easy deployment to Netlify
+- Responsive image gallery
+- Admin dashboard for photo management
+- Blog section
+- Contact form
+- SEO optimized
+- High performance
+- Static site export for GitHub Pages
 
 ## Getting Started
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) (recommended) or Node.js v16+
-- Git
+- Node.js 18+ or Bun
+- GitHub account
+- Cloudinary account (free tier is sufficient)
 
-### Development Setup
+### Setup
 
-1. Clone the repository:
-
+1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/barelands.git
-cd barelands
+git clone https://github.com/yourusername/landscape-photographer.git
+cd landscape-photographer
 ```
 
-2. Install dependencies:
-
+2. Install dependencies
 ```bash
+npm install
+# or
 bun install
-# or npm install
 ```
 
-3. Set up environment variables:
+3. Configure Cloudinary
+   - Sign up for a [Cloudinary account](https://cloudinary.com)
+   - Create an upload preset in your Cloudinary dashboard:
+     - Go to Settings > Upload
+     - Scroll down to "Upload presets" and click "Add upload preset"
+     - Set "Upload preset name" (remember this name)
+     - Set "Signing Mode" to "Signed"
+     - Save the preset
 
-Create a `.env.local` file in the root directory using `.env.local` as a template.
+4. Create a `.env.local` file with your Cloudinary credentials
+```
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
+NEXT_PUBLIC_CLOUDINARY_PRESET_NAME=your-upload-preset
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+```
 
+5. Run the development server
 ```bash
-cp .env.local.example .env.local
+npm run dev
+# or
+bun run dev
 ```
 
-Update the `.env.local` file with your credentials. Make sure to:
-- Generate a secure `NEXTAUTH_SECRET` (you can use `openssl rand -base64 32`)
-- Update `ADMIN_EMAIL` and `ADMIN_PASSWORD_HASH` values
-- Set `NEXTAUTH_URL` to your domain in production
+6. Open [http://localhost:3000](http://localhost:3000) to see your application
 
-4. Run the development server:
+## Deployment to GitHub Pages
 
+### One-time setup
+
+1. Create a new repository on GitHub
+
+2. Push your code to GitHub
 ```bash
-bun dev
-# or npm run dev
+git remote add origin https://github.com/yourusername/landscape-photographer.git
+git push -u origin main
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
+3. Set up GitHub Pages:
+   - Go to your repository on GitHub
+   - Navigate to Settings > Pages
+   - Set "Source" to "GitHub Actions"
 
-## Adding Your Photos
+4. Add your Cloudinary secrets to GitHub:
+   - Go to Settings > Secrets and variables > Actions
+   - Add the following repository secrets:
+     - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`: Your Cloudinary cloud name
+     - `NEXT_PUBLIC_CLOUDINARY_PRESET_NAME`: Your Cloudinary upload preset name
 
-1. Replace the sample photos in the `/public` directory with your own images.
-2. Update the photo data in `src/lib/data.ts` with your photo details.
-3. Add additional categories as needed.
+### Automated Deployment
 
-## Customizing Content
+The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically builds and deploys your site to GitHub Pages whenever you push to the main branch.
 
-Edit the following files to customize the website content:
+After pushing your code, the action will:
+1. Build your Next.js application as a static site
+2. Deploy it to GitHub Pages
+3. You can monitor the deployment in the "Actions" tab of your repository
 
-- `src/lib/data.ts` - Main data file containing photo and about information
-- `src/components/HeroSection.tsx` - Hero section content
-- `src/components/AboutSection.tsx` - About section content
-- `src/components/Footer.tsx` - Footer content and links
+## File Structure
 
-## Deployment to Netlify
+- `/src/app`: Next.js application routes and pages
+- `/src/components`: React components
+- `/src/lib`: Utility functions and data
+- `/public`: Static assets
 
-This project is configured for easy deployment to Netlify. To deploy:
+## Customization
 
-1. Push your code to a Git repository (GitHub, GitLab, Bitbucket)
-2. Log in to Netlify and click "New site from Git"
-3. Select your repository and configure build settings:
-   - Build command: `bun run build` or `npm run build`
-   - Publish directory: `.next`
-4. Add environment variables in the Netlify dashboard matching your `.env.local` file
-5. Deploy the site
-
-### Domain Configuration
-
-To set up your custom domain (barelands.vip):
-
-1. In the Netlify dashboard, go to Site settings > Domain management
-2. Click "Add custom domain" and enter your domain
-3. Follow the DNS configuration instructions provided by Netlify
-4. Update your `NEXTAUTH_URL` environment variable to match your production URL
-
-## Security Considerations
-
-- Change the default admin password immediately after deployment
-- Generate a unique, secure `NEXTAUTH_SECRET` for production
-- Consider enabling Two-Factor Authentication for your Netlify account
-- Regularly backup your photo data
-
-## Admin Features
-
-The admin panel is accessible at `/admin` and includes:
-
-- Dashboard with key statistics and recent activity
-- Photo management (upload, edit, delete)
-- Analytics data visualization
-
-Default admin credentials:
-- Email: admin@barelands.vip
-- Password: changeme123 (change this immediately)
+- Update your photographer information in `/src/lib/data.ts`
+- Modify the site theme in `/src/app/globals.css`
+- Add or edit pages in the `/src/app` directory
 
 ## License
 
-This project is proprietary and not for redistribution.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Support
+## Acknowledgments
 
-For support, please contact your developer.
+- [Next.js](https://nextjs.org/)
+- [Cloudinary](https://cloudinary.com/)
+- [GitHub Pages](https://pages.github.com/)

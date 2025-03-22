@@ -1,19 +1,35 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { compare } from "bcrypt";
-import { AuthOptions } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
+
+// IMPORTANT: Adding static export config to make it work with GitHub Pages
+export const dynamic = 'force-static';
+export const revalidate = false;
+
+// Generate static params for all possible auth routes
+export function generateStaticParams() {
+  return [
+    { nextauth: ['signin'] },
+    { nextauth: ['signout'] },
+    { nextauth: ['callback'] },
+    { nextauth: ['session'] },
+    { nextauth: ['csrf'] },
+    { nextauth: ['providers'] },
+    { nextauth: ['signin', 'credentials'] },
+  ];
+}
 
 // In a production environment, these credentials would be stored in a database
 // This is just a temporary solution
 const ADMIN_EMAIL = "admin@barelands.vip";
-// HARDCODED PASSWORD HASH for 'secure123' - bypassing environment variable issues
-const ADMIN_PASSWORD_HASH = "$2b$10$LwtmZiBql13DJYx6Qez5yuKj7IpVFeswMi79IcLXLBJhSk6Kmxb.2";
+// Direct password for static sites
+const ADMIN_PASSWORD = "Lm19421983";
 
 // Debug logs
 console.log('Auth Config - Email:', ADMIN_EMAIL);
-console.log('Auth Config - Full Hash:', ADMIN_PASSWORD_HASH);
 
-export const authOptions: AuthOptions = {
+// Define the auth options
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -28,30 +44,17 @@ export const authOptions: AuthOptions = {
         }
         
         try {
-          // In a real world scenario, you would fetch this from your database
-          console.log('Login attempt - Email:', credentials.email);
-          
-          if (credentials.email === ADMIN_EMAIL) {
-            console.log('Email matched, checking password...');
-            console.log('Password provided:', credentials.password);
-            
-            try {
-              const passwordMatch = await compare(credentials.password, ADMIN_PASSWORD_HASH);
-              console.log('Password match result:', passwordMatch);
-              
-              if (passwordMatch) {
-                console.log('Authentication successful');
-                return {
-                  id: "1",
-                  email: ADMIN_EMAIL,
-                  name: "Admin",
-                };
-              }
-            } catch (bcryptError) {
-              console.error("Bcrypt error:", bcryptError);
-              return null;
-            }
+          // For static site, use direct password comparison
+          if (credentials.email === ADMIN_EMAIL && 
+              credentials.password === ADMIN_PASSWORD) {
+            console.log('Authentication successful');
+            return {
+              id: "1",
+              email: ADMIN_EMAIL,
+              name: "Admin",
+            };
           }
+          
           console.log('Authentication failed');
           return null;
         } catch (error) {
@@ -99,6 +102,8 @@ export const authOptions: AuthOptions = {
   },
 };
 
+// Create the auth handler
 const handler = NextAuth(authOptions);
 
+// Export the handler functions
 export { handler as GET, handler as POST }; 

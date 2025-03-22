@@ -15,6 +15,10 @@ const contactFormSchema = z.object({
 // Email destination - this is configured server-side for security
 const CONTACT_EMAIL = "lucimast@gmail.com";
 
+// Add static export configuration
+export const dynamic = 'force-static';
+export const revalidate = false;
+
 export async function POST(request: NextRequest) {
   try {
     // Parse the request body

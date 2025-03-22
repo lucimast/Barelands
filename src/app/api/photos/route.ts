@@ -3,6 +3,10 @@ import { photos, Photo } from '@/lib/data';
 import fs from 'fs/promises';
 import path from 'path';
 
+// Add static export configuration
+export const dynamic = 'force-static';
+export const revalidate = false;
+
 // Path to stored photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
 
@@ -17,11 +21,10 @@ async function loadPhotoData(): Promise<Photo[]> {
   }
 }
 
-export async function GET(request: NextRequest) {
+// For static export, we need a version that doesn't use request.url
+// We'll return all photos (unfiltered) for static export
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
-    
     // Load photos from file
     let storedPhotos: Photo[] = [];
     try {
@@ -46,11 +49,6 @@ export async function GET(request: NextRequest) {
     
     // Convert back to array
     let allPhotos = Array.from(photoMap.values());
-    
-    // Apply category filter if provided
-    if (category && category !== 'All') {
-      allPhotos = allPhotos.filter(photo => photo.category === category);
-    }
     
     // Sort by dateAdded, newest first
     allPhotos.sort((a, b) => 

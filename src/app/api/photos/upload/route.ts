@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { photos, Photo } from '@/lib/data';
-import { saveImageToLocal, createUploadFolderIfNeeded } from '@/lib/server-storage';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import path from 'path';
+
+// Add static export configuration
+export const dynamic = 'force-static';
+export const revalidate = false;
 
 // Path to store photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
@@ -90,20 +93,6 @@ async function revalidatePages(baseUrl: string) {
   }
 }
 
-// Helper function to convert File to base64
-async function fileToBase64(file: File): Promise<string> {
-  try {
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64 = buffer.toString('base64');
-    const mimeType = file.type;
-    return `data:${mimeType};base64,${base64}`;
-  } catch (error) {
-    console.error('Error converting file to base64:', error);
-    throw new Error('Failed to process image file');
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
@@ -112,31 +101,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Parse request body
-    let formData;
+    // Parse request body as JSON instead of form data
+    let photoData;
     try {
-      formData = await request.formData();
+      photoData = await request.json();
     } catch (error) {
-      console.error('Error parsing form data:', error);
+      console.error('Error parsing JSON data:', error);
       return NextResponse.json({ 
         success: false, 
-        error: 'Invalid form data', 
+        error: 'Invalid JSON data', 
         details: error instanceof Error ? error.message : 'Unknown error'
       }, { status: 400 });
     }
 
-    const imageFile = formData.get('image') as File | null;
-    const title = formData.get('title') as string;
-    const category = formData.get('category') as string;
-    const description = formData.get('description') as string || '';
-    const location = formData.get('location') as string || '';
-    const featuredStr = formData.get('featured') as string || 'false';
-    const featured = featuredStr === 'true';
+    const { title, category, description = '', location = '', image, featured = false } = photoData;
 
     // Validate required fields
-    if (!imageFile) {
+    if (!image) {
       return NextResponse.json(
-        { success: false, error: 'No image file provided' },
+        { success: false, error: 'No image URL provided' },
         { status: 400 }
       );
     }
@@ -148,50 +131,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Log file info for debugging
-    console.log('Image file details:', {
-      name: imageFile.name,
-      type: imageFile.type,
-      size: imageFile.size,
-    });
-
-    // Ensure uploads folder exists
-    try {
-      await createUploadFolderIfNeeded();
-    } catch (error) {
-      console.error('Error creating uploads folder:', error);
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Failed to prepare upload directory',
-        details: error instanceof Error ? error.message : 'Unknown error' 
-      }, { status: 500 });
-    }
-
-    // Convert file to base64
-    let base64Image;
-    try {
-      base64Image = await fileToBase64(imageFile);
-    } catch (error) {
-      console.error('Error converting file to base64:', error);
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Failed to process image file',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, { status: 500 });
-    }
-
-    // Save image to local storage
-    let savedImagePath;
-    try {
-      savedImagePath = await saveImageToLocal(base64Image);
-    } catch (error) {
-      console.error('Error saving image to local storage:', error);
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Failed to save image file',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, { status: 500 });
-    }
+    // Log image info for debugging
+    console.log('Image URL:', image);
     
     // Create new photo object
     const newPhoto = {
@@ -200,7 +141,7 @@ export async function POST(request: NextRequest) {
       category,
       description,
       location,
-      image: savedImagePath,
+      image, // Use the Cloudinary URL directly
       featured,
       dateAdded: new Date().toISOString(),
     };
@@ -249,19 +190,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      photo: newPhoto,
-      message: 'Photo uploaded successfully'
-    });
+      message: 'Photo uploaded successfully',
+      photo: newPhoto
+    }, { status: 201 });
+    
   } catch (error) {
-    console.error('Unhandled error in photo upload:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to upload photo',
-        details: error instanceof Error ? error.message : 'Unknown error',
-        stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
-      },
-      { status: 500 }
-    );
+    console.error('Unhandled error in upload route:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 } 

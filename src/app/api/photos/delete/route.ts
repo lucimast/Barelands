@@ -7,6 +7,10 @@ import path from 'path';
 import { deleteImageFile } from '@/lib/server-storage';
 import { revalidatePath } from 'next/cache';
 
+// Add static export configuration
+export const dynamic = 'force-static';
+export const revalidate = false;
+
 // Path to stored photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
 
