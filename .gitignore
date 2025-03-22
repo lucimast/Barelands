@@ -19,6 +19,7 @@
 
 # production
 # /build  # Uncommenting this line to allow the build folder for GitHub Pages
+# /docs   # Also allowing docs folder for GitHub Pages
 
 # misc
 .DS_Store
