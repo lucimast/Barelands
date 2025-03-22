@@ -9,9 +9,10 @@ import { revalidatePath } from 'next/cache';
 import fsPromises from 'fs/promises';
 import { photoImageExists } from '@/lib/server-storage';
 
-// Add static export configuration
-export const dynamic = 'force-static';
-export const revalidate = false;
+// Configure as a dynamic API route during runtime
+// but allow build to proceed during static export
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 
 // Path to stored photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
@@ -42,26 +43,18 @@ async function loadPhotoData() {
   }
 }
 
-// Revalidate all pages to update the UI
-async function revalidateAllPages(baseUrl: string) {
+// Revalidate paths directly using next/cache
+function revalidateAllPages() {
   const pagesToRevalidate = ['/', '/admin', '/news', '/prints', '/portfolio'];
-  const results = {
-    success: [] as string[],
-    failed: [] as string[]
-  };
   
   for (const page of pagesToRevalidate) {
     try {
-      await fetch(`${baseUrl}/api/revalidate?path=${page}&secret=barelands_secret_key`);
+      revalidatePath(page);
       console.log(`Revalidated path: ${page}`);
-      results.success.push(page);
     } catch (error) {
       console.error(`Failed to revalidate path ${page}:`, error);
-      results.failed.push(page);
     }
   }
-  
-  return results;
 }
 
 // Validate photo data and remove references to missing files
@@ -104,15 +97,14 @@ export async function GET(request: NextRequest) {
     
     console.log(`Initialized ${photos.length} photos (filtered from ${storedPhotos.length} total)`);
     
-    // Revalidate all pages to ensure the UI is updated
-    const revalidationResults = await revalidateAllPages(request.nextUrl.origin);
+    // Revalidate all pages directly
+    revalidateAllPages();
     
     return NextResponse.json({
       success: true,
       message: "Photos synchronized and all pages revalidated",
       photoCount: photos.length,
-      originalCount: storedPhotos.length,
-      revalidationResults
+      originalCount: storedPhotos.length
     });
   } catch (error) {
     console.error("Error synchronizing photos:", error);
