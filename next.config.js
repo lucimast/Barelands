@@ -20,6 +20,10 @@ const nextConfig = {
   },
   output: 'export', // Enable static site generation for GitHub Pages deployment
   
+  // Add this for GitHub Pages deployment
+  basePath: '/Barelands',
+  assetPrefix: '/Barelands/',
+  
   // Disable ESLint during production build since we're making a static site
   eslint: {
     ignoreDuringBuilds: true,
