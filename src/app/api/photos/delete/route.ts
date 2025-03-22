@@ -7,9 +7,9 @@ import path from 'path';
 import { deleteImageFile } from '@/lib/server-storage';
 import { revalidatePath } from 'next/cache';
 
-// Add static export configuration
-export const dynamic = 'force-static';
-export const revalidate = false;
+// Configure as a dynamic API route during runtime
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 
 // Path to stored photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
@@ -43,12 +43,12 @@ async function savePhotoData(photoData: Photo[]): Promise<boolean> {
 }
 
 // Revalidate all relevant pages to update the UI
-async function revalidateAllPages(baseUrl: string) {
+function revalidateAllPages() {
   const pagesToRevalidate = ['/', '/admin', '/news', '/prints', '/portfolio'];
   
   for (const page of pagesToRevalidate) {
     try {
-      await fetch(`${baseUrl}/api/revalidate?path=${page}&secret=barelands_secret_key`);
+      revalidatePath(page);
       console.log(`Revalidated path: ${page}`);
     } catch (error) {
       console.error(`Failed to revalidate path ${page}:`, error);
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Revalidate all pages to refresh the UI
-    await revalidateAllPages(request.nextUrl.origin);
+    revalidateAllPages();
 
     return NextResponse.json({
       success: true,

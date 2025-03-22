@@ -5,10 +5,11 @@ import { photos, Photo } from '@/lib/data';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import path from 'path';
+import { revalidatePath } from 'next/cache';
 
-// Add static export configuration
-export const dynamic = 'force-static';
-export const revalidate = false;
+// Configure as a dynamic API route during runtime
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 
 // Path to store photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
@@ -73,13 +74,13 @@ async function synchronizePhotos() {
 }
 
 // Revalidate relevant pages
-async function revalidatePages(baseUrl: string) {
+function revalidatePages() {
   try {
     const pagesToRevalidate = ['/', '/admin', '/news', '/prints', '/portfolio'];
     
     for (const page of pagesToRevalidate) {
       try {
-        await fetch(`${baseUrl}/api/revalidate?path=${page}&secret=barelands_secret_key`);
+        revalidatePath(page);
         console.log(`Revalidated page: ${page}`);
       } catch (error) {
         console.error(`Failed to revalidate page ${page}:`, error);
@@ -182,7 +183,7 @@ export async function POST(request: NextRequest) {
     
     // Revalidate all pages to ensure the new photo appears everywhere
     try {
-      await revalidatePages(request.nextUrl.origin);
+      revalidatePages();
     } catch (error) {
       console.error('Error revalidating pages:', error);
       // Continue anyway as this shouldn't block the upload
