@@ -62,12 +62,23 @@ export default function ContactPage() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/contact', {
+      // Using FormSpree for static sites (replace with your FormSpree endpoint)
+      // This allows for form submissions without server-side code
+      const formspreeEndpoint = "https://formspree.io/f/mqgwvpye"; // Replace with your FormSpree endpoint
+      
+      const response = await fetch(formspreeEndpoint, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          subject: data.subject,
+          message: data.message,
+          _subject: `[Barelands Contact] ${data.subject}`
+        })
       });
       
       if (!response.ok) {
