@@ -9,6 +9,7 @@ import { type Photo } from "@/lib/data"; // Only import the type, not the static
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FiCalendar, FiMap, FiImage, FiHome } from "react-icons/fi";
 import { filterValidPhotos } from "@/lib/storage";
+import { isStaticExport, getStaticPhotoData } from "@/lib/static-data";
 
 // Sample blog posts data
 // In a real implementation, this would come from a CMS or API
@@ -34,20 +35,50 @@ const blogPosts = [
 export default function NewsPage() {
   const [recentPhotos, setRecentPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isStatic, setIsStatic] = useState(false);
+  
+  // Check if we're in static export environment
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsStatic(isStaticExport());
+    }
+  }, []);
   
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
         setIsLoading(true);
-        // Fetch photos from API instead of using static import
-        const response = await fetch('/api/photos');
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch photos');
+        let validPhotos: Photo[] = [];
+        
+        // Check if we're in static export mode
+        if (isStatic) {
+          // Use static data in GitHub Pages environment
+          console.log("News page: Using static photo data");
+          validPhotos = await getStaticPhotoData();
+          
+          // Fix for GitHub Pages: ensure image paths are correct with repo name
+          if (typeof window !== 'undefined' && window.location.pathname.includes('/Barelands/')) {
+            validPhotos = validPhotos.map(photo => ({
+              ...photo,
+              image: photo.image.startsWith('/') 
+                ? `/Barelands${photo.image}` 
+                : `/Barelands/${photo.image}`
+            }));
+          }
+        } else {
+          // Fetch photos from API instead of using static import
+          const response = await fetch('/api/photos');
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch photos');
+          }
+          
+          const data = await response.json();
+          validPhotos = filterValidPhotos(data);
         }
         
-        const data = await response.json();
-        const validPhotos = filterValidPhotos(data);
+        console.log("News page: Loaded photos count:", validPhotos.length);
         
         // Sort photos by date added (descending) and take the 6 most recent
         const sortedPhotos = validPhotos.sort((a, b) => {
@@ -63,7 +94,7 @@ export default function NewsPage() {
     };
     
     fetchPhotos();
-  }, []);
+  }, [isStatic]);
 
   return (
     <main className="pt-20 pb-24">
@@ -116,88 +147,143 @@ export default function NewsPage() {
   );
 }
 
+// RecentPhotoCard component for displaying a recent photo in the grid
 function RecentPhotoCard({ photo }: { photo: Photo }) {
+  const [imagePath, setImagePath] = useState<string>(photo.image);
+  const [imageError, setImageError] = useState(false);
+  const [isStatic, setIsStatic] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Set image path and check if we're in static mode
+    setImagePath(photo.image);
+    setIsStatic(isStaticExport());
+  }, [photo.image]);
+  
+  // Handle image error by trying fallback path for GitHub Pages
+  const handleImageError = () => {
+    console.error(`Failed to load image: ${imagePath}`);
+    
+    // Try fallback only if needed
+    if (isStatic && !imagePath.includes('/Barelands/') && imagePath.startsWith('/')) {
+      const fallbackPath = `/Barelands${imagePath}`;
+      console.log(`Trying fallback path: ${fallbackPath}`);
+      setImagePath(fallbackPath);
+    } else {
+      setImageError(true);
+    }
+  };
+  
+  // Don't render if image failed to load
+  if (imageError) {
+    return (
+      <div className="bg-zinc-800 rounded-lg p-4 aspect-square flex items-center justify-center">
+        <p className="text-zinc-500 text-sm">Image unavailable</p>
+      </div>
+    );
+  }
+  
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="bg-zinc-900 rounded-lg overflow-hidden shadow-md flex flex-col h-full"
-    >
-      <div className="relative w-full" style={{ paddingBottom: "75%" }}>
+    <div className="relative aspect-square overflow-hidden rounded-lg group">
+      <Link href={`/portfolio?photo=${photo.id}`}>
         <Image
-          src={photo.image}
+          src={imagePath}
           alt={photo.title}
           fill
-          className="object-cover"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={handleImageError}
+          unoptimized
         />
-        {photo.featured && (
-          <span className="absolute top-3 right-3 bg-white text-zinc-900 text-xs font-medium px-2 py-1 rounded-full">
-            Featured
-          </span>
-        )}
-      </div>
-      <div className="p-5 flex-grow">
-        <h3 className="text-xl font-bold mb-2">{photo.title}</h3>
-        
-        <div className="flex items-center text-zinc-400 text-sm mb-3">
-          <FiMap className="mr-1" />
-          <span>{photo.location}</span>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4">
+          <h3 className="text-white text-lg font-medium">{photo.title}</h3>
+          <p className="text-zinc-300 text-sm">{photo.location}</p>
         </div>
-        
-        <p className="text-zinc-300 mb-4 line-clamp-2">{photo.description}</p>
-        
-        <div className="mt-auto pt-3 border-t border-zinc-800 flex justify-between items-center">
-          <div className="flex items-center text-zinc-400 text-sm">
-            <FiCalendar className="mr-1" />
-            <span>{format(new Date(photo.dateAdded), 'MMM d, yyyy')}</span>
-          </div>
-          <Link 
-            href={`/portfolio?photo=${photo.id}`} 
-            className="text-white font-medium text-sm flex items-center hover:underline"
-          >
-            View Photo <FiImage className="ml-1" />
-          </Link>
-        </div>
-      </div>
-    </motion.div>
+      </Link>
+    </div>
   );
 }
 
+// BlogPostCard component for displaying a blog post
 function BlogPostCard({ post }: { post: any }) {
+  const [imagePath, setImagePath] = useState<string>(post.coverImage);
+  const [imageError, setImageError] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Set initial image path
+    setImagePath(post.coverImage);
+    
+    // Add GitHub Pages prefix if needed
+    if (window.location.pathname.includes('/Barelands/') && 
+        post.coverImage.startsWith('/') && 
+        !post.coverImage.startsWith('/Barelands/')) {
+      setImagePath(`/Barelands${post.coverImage}`);
+    }
+  }, [post.coverImage]);
+  
+  // Handle image error by trying fallback path for GitHub Pages
+  const handleImageError = () => {
+    console.error(`Failed to load blog image: ${imagePath}`);
+    
+    // Only try fallback if not already tried
+    if (!imagePath.includes('/Barelands/') && 
+        imagePath.startsWith('/') && 
+        window.location.pathname.includes('/Barelands/')) {
+      const fallbackPath = `/Barelands${imagePath}`;
+      console.log(`Trying fallback blog image path: ${fallbackPath}`);
+      setImagePath(fallbackPath);
+    } else {
+      setImageError(true);
+    }
+  };
+
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="flex flex-col md:flex-row gap-6 bg-zinc-900 rounded-lg overflow-hidden shadow-md"
-    >
-      <div className="md:w-1/3 relative aspect-[16/9] md:aspect-auto md:min-h-[240px]">
-        <Image
-          src={post.coverImage}
-          alt={post.title}
-          fill
-          className="object-cover"
-        />
-      </div>
-      <div className="p-6 md:w-2/3">
-        <h2 className="text-2xl font-bold mb-3">{post.title}</h2>
-        <div className="flex items-center gap-3 text-zinc-400 text-sm mb-4">
-          <div className="flex items-center">
-            <FiCalendar className="mr-1" />
-            <span>{format(new Date(post.date), 'MMMM d, yyyy')}</span>
+    <div className="flex flex-col space-y-4">
+      <div className="relative aspect-video rounded-lg overflow-hidden">
+        {!imageError ? (
+          <Image
+            src={imagePath}
+            alt={post.title}
+            fill
+            className="object-cover"
+            onError={handleImageError}
+            unoptimized
+          />
+        ) : (
+          <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
+            <p className="text-zinc-500">Image unavailable</p>
           </div>
-          <span>•</span>
-          <span>{post.author}</span>
-        </div>
-        <p className="text-zinc-300 mb-5">{post.excerpt}</p>
-        <Link 
-          href={`/blog/${post.id}`}
-          className="inline-flex items-center px-4 py-2 bg-white text-zinc-900 rounded-md hover:bg-zinc-200 transition-colors font-medium text-sm"
-        >
-          Read More
-        </Link>
+        )}
       </div>
-    </motion.article>
+      <div>
+        <div className="flex items-center text-zinc-400 text-sm mb-2">
+          <FiCalendar className="mr-2" />
+          <span>{format(new Date(post.date), 'MMMM d, yyyy')}</span>
+        </div>
+        <h3 className="text-xl font-medium mb-2">{post.title}</h3>
+        <p className="text-zinc-400">{post.excerpt}</p>
+        <div className="mt-4">
+          <Link 
+            href="#" 
+            className="inline-flex items-center text-zinc-300 hover:text-white text-sm"
+          >
+            Read more
+            <svg 
+              className="w-4 h-4 ml-1" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 } 
