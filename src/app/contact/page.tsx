@@ -25,8 +25,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// FormSpree endpoint - using direct email format which doesn't require form creation
-const FORMSPREE_ENDPOINT = "https://formspree.io/lucimast@gmail.com";
+// FormSpree endpoint - using proper xxxxxxxxxxx format
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xyyqwpee";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,14 +66,22 @@ export default function ContactPage() {
     setIsSubmitting(true);
     
     try {
-      // Track the event before submitting the form
+      // Track the event
       trackEvent('contact_form_submit', {
         subject: data.subject
       });
       
-      // Submit the form directly to FormSpree
-      if (formRef.current) {
-        formRef.current.submit();
+      // Send the form data to FormSpree via fetch instead of form submission
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json'
+        },
+        body: new FormData(formRef.current as HTMLFormElement)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send message');
       }
       
       // Show success message
@@ -135,8 +143,6 @@ export default function ContactPage() {
               <Form {...form}>
                 <form 
                   ref={formRef}
-                  action={FORMSPREE_ENDPOINT} 
-                  method="POST"
                   onSubmit={form.handleSubmit(onSubmit)} 
                   className="space-y-6"
                 >
