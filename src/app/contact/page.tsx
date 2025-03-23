@@ -25,13 +25,22 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// FormSpree endpoint - use your actual email for direct endpoint
-const FORMSPREE_ENDPOINT = "https://formspree.io/lucimast@gmail.com";
+// Google Forms endpoint - more reliable than FormSpree
+const FORM_ENDPOINT = "https://docs.google.com/forms/d/e/1FAIpQLSemKKp5Z4TT7UXB9UoH0Z4TMCOiYvmg5HjyJtqf8IrzpVrJhA/formResponse";
+
+// Field mappings for Google Forms
+const FIELD_MAPPINGS = {
+  name: "entry.1262687114",
+  email: "entry.1333325337", 
+  subject: "entry.1445398066",
+  message: "entry.493868231"
+};
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -61,19 +70,18 @@ export default function ContactPage() {
     }
   }, [form]);
 
-  // Handle form submission
-  const onSubmit = (data: FormValues) => {
-    // Track the event
-    trackEvent('contact_form_submit', {
-      subject: data.subject
-    });
-    
-    // Don't need to do anything else here - the form will submit directly to FormSpree
-    // This is the most reliable method as it avoids all AJAX/fetch complexities
-    
-    // We'll show the success message after redirect or in iframe
-    return true; // Allow the form to actually submit
-  };
+  // Setup message listener to detect when the form is submitted
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data === 'form-submitted') {
+        setSuccess(true);
+        form.reset();
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [form]);
 
   return (
     <main className="min-h-screen pt-24 pb-16">
@@ -123,29 +131,47 @@ export default function ContactPage() {
                 <form 
                   ref={formRef}
                   method="POST"
-                  action={FORMSPREE_ENDPOINT}
-                  target="_blank" 
+                  action={FORM_ENDPOINT}
+                  target="hidden_iframe"
                   onSubmit={(e) => {
                     const isValid = form.formState.isValid;
                     if (!isValid) {
                       e.preventDefault(); // Don't submit if validation fails
                       return;
                     }
-                    // Get the form data
-                    const data = form.getValues();
-                    // Track the event before submission
-                    onSubmit(data);
-                    // After submission is complete
+                    
+                    // Track the form submission event
+                    trackEvent('contact_form_submit', {
+                      subject: form.getValues().subject
+                    });
+                    
+                    // Let the form submit to Google Forms
+                    setIsSubmitting(true);
+                    
+                    // Automatically show success after a short timeout
+                    // This is a fallback in case the iframe message doesn't work
                     setTimeout(() => {
+                      setIsSubmitting(false);
                       setSuccess(true);
                       form.reset();
-                    }, 1000);
+                    }, 2000);
                   }}
                   className="space-y-6"
                 >
-                  {/* Hidden fields for FormSpree configuration */}
-                  <input type="hidden" name="_subject" value="New contact from Barelands website" />
-                  <input type="text" name="_gotcha" style={{ display: 'none' }} />
+                  {/* Hidden iframe to prevent page navigation */}
+                  <iframe 
+                    ref={iframeRef}
+                    name="hidden_iframe" 
+                    id="hidden_iframe" 
+                    style={{ display: 'none' }} 
+                    onLoad={() => {
+                      if (isSubmitting) {
+                        setIsSubmitting(false);
+                        setSuccess(true);
+                        form.reset();
+                      }
+                    }}
+                  />
                   
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
@@ -161,6 +187,7 @@ export default function ContactPage() {
                                 placeholder="John Doe"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
+                                name={FIELD_MAPPINGS.name}
                               />
                             </div>
                           </FormControl>
@@ -182,6 +209,7 @@ export default function ContactPage() {
                                 placeholder="johndoe@example.com"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
+                                name={FIELD_MAPPINGS.email}
                               />
                             </div>
                           </FormControl>
@@ -201,6 +229,7 @@ export default function ContactPage() {
                             placeholder="What is your message about?"
                             className="bg-zinc-800 border-zinc-700"
                             {...field}
+                            name={FIELD_MAPPINGS.subject}
                           />
                         </FormControl>
                         <FormMessage />
@@ -221,6 +250,7 @@ export default function ContactPage() {
                               placeholder="Please provide details about your inquiry..."
                               className="pl-10 bg-zinc-800 border-zinc-700"
                               {...field}
+                              name={FIELD_MAPPINGS.message}
                             />
                           </div>
                         </FormControl>
