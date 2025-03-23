@@ -15,9 +15,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
 
-// FormSpree endpoint
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/mqgwvpye";
-
 // Form validation schema
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -28,10 +25,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// FormSpree endpoint - updated to use the correct ID or direct email format
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mgelejpl";
+
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -61,30 +60,35 @@ export default function ContactPage() {
     }
   }, [form]);
 
-  // Handle form submission - using the traditional form submission approach
-  // which is more reliable for FormSpree with static sites
+  // Handle form submission
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     
     try {
-      // Track the event first
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send message');
+      }
+      
+      // Track the event
       trackEvent('contact_form_submit', {
         subject: data.subject
       });
       
-      // Use the HTML form submission which is more reliable with FormSpree
-      if (formRef.current) {
-        formRef.current.submit();
-        
-        // Show success message after form is submitted
-        toast.success("Your message has been sent successfully!");
-        setSuccess(true);
-        form.reset();
-      } else {
-        throw new Error("Form reference not available");
-      }
+      // Show success message
+      toast.success("Your message has been sent successfully!");
+      setSuccess(true);
+      form.reset();
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error('Error sending message:', error);
       toast.error("Failed to send your message. Please try again later.");
     } finally {
       setIsSubmitting(false);
@@ -135,100 +139,22 @@ export default function ContactPage() {
                 <Button onClick={() => setSuccess(false)}>Send Another Message</Button>
               </div>
             ) : (
-              <div>
-                <Form {...form}>
-                  <form 
-                    ref={formRef} 
-                    action={FORMSPREE_ENDPOINT} 
-                    method="POST"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      form.handleSubmit(onSubmit)();
-                    }} 
-                    className="space-y-6"
-                  >
-                    <input type="hidden" name="_subject" value="New Contact from Barelands Website" />
-                    <input type="hidden" name="_format" value="plain" />
-                    <input type="text" name="_gotcha" style={{ display: 'none' }} />
-
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Your Name</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <FiUser className="absolute left-3 top-3 text-zinc-500" />
-                                <Input
-                                  placeholder="John Doe"
-                                  className="pl-10 bg-zinc-800 border-zinc-700"
-                                  {...field}
-                                  name="name"
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email Address</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <FiMail className="absolute left-3 top-3 text-zinc-500" />
-                                <Input
-                                  type="email"
-                                  placeholder="johndoe@example.com"
-                                  className="pl-10 bg-zinc-800 border-zinc-700"
-                                  {...field}
-                                  name="email"
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
-                      name="subject"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Subject</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="What is your message about?"
-                              className="bg-zinc-800 border-zinc-700"
-                              {...field}
-                              name="subject"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="message"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Your Message</FormLabel>
+                          <FormLabel>Your Name</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <FiMessageSquare className="absolute left-3 top-3 text-zinc-500" />
-                              <Textarea
-                                rows={6}
-                                placeholder="Please provide details about your inquiry..."
+                              <FiUser className="absolute left-3 top-3 text-zinc-500" />
+                              <Input
+                                placeholder="John Doe"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
-                                name="message"
                               />
                             </div>
                           </FormControl>
@@ -236,24 +162,83 @@ export default function ContactPage() {
                         </FormItem>
                       )}
                     />
-                    <Button 
-                      type="submit" 
-                      className="w-full md:w-auto"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <span className="animate-pulse">Sending...</span>
-                        </>
-                      ) : (
-                        <>
-                          <FiSend className="mr-2" /> Send Message
-                        </>
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <FiMail className="absolute left-3 top-3 text-zinc-500" />
+                              <Input
+                                type="email"
+                                placeholder="johndoe@example.com"
+                                className="pl-10 bg-zinc-800 border-zinc-700"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </Button>
-                  </form>
-                </Form>
-              </div>
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="What is your message about?"
+                            className="bg-zinc-800 border-zinc-700"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your Message</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <FiMessageSquare className="absolute left-3 top-3 text-zinc-500" />
+                            <Textarea
+                              rows={6}
+                              placeholder="Please provide details about your inquiry..."
+                              className="pl-10 bg-zinc-800 border-zinc-700"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="submit" 
+                    className="w-full md:w-auto"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="animate-pulse">Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FiSend className="mr-2" /> Send Message
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </Form>
             )}
           </motion.div>
         </div>
