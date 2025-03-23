@@ -40,7 +40,9 @@ export default function NewsPage() {
   // Check if we're in static export environment
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsStatic(isStaticExport());
+      const staticStatus = isStaticExport();
+      console.log("News page static mode:", staticStatus);
+      setIsStatic(staticStatus);
     }
   }, []);
   
@@ -57,25 +59,40 @@ export default function NewsPage() {
           console.log("News page: Using static photo data");
           validPhotos = await getStaticPhotoData();
           
-          // Fix for GitHub Pages: ensure image paths are correct with repo name
-          if (typeof window !== 'undefined' && window.location.pathname.includes('/Barelands/')) {
-            validPhotos = validPhotos.map(photo => ({
-              ...photo,
-              image: photo.image.startsWith('/') 
-                ? `/Barelands${photo.image}` 
-                : `/Barelands/${photo.image}`
-            }));
+          // Fix for GitHub Pages: ensure image paths are correct
+          if (typeof window !== 'undefined') {
+            const needsPathFix = window.location.hostname.includes('github.io') || 
+                window.location.pathname.includes('/Barelands/');
+                
+            if (needsPathFix) {
+              validPhotos = validPhotos.map(photo => {
+                if (photo.image && photo.image.startsWith('/') && !photo.image.startsWith('/Barelands/')) {
+                  return {
+                    ...photo,
+                    image: `/Barelands${photo.image}`
+                  };
+                }
+                return photo;
+              });
+              
+              console.log("News page: Fixed GitHub Pages paths", validPhotos[0]?.image);
+            }
           }
         } else {
           // Fetch photos from API instead of using static import
-          const response = await fetch('/api/photos');
-          
-          if (!response.ok) {
-            throw new Error('Failed to fetch photos');
+          try {
+            const response = await fetch('/api/photos');
+            
+            if (!response.ok) {
+              throw new Error('Failed to fetch photos');
+            }
+            
+            const data = await response.json();
+            validPhotos = filterValidPhotos(data);
+          } catch (error) {
+            console.error('API fetch failed, falling back to static data:', error);
+            validPhotos = await getStaticPhotoData();
           }
-          
-          const data = await response.json();
-          validPhotos = filterValidPhotos(data);
         }
         
         console.log("News page: Loaded photos count:", validPhotos.length);
@@ -151,50 +168,46 @@ export default function NewsPage() {
 function RecentPhotoCard({ photo }: { photo: Photo }) {
   const [imagePath, setImagePath] = useState<string>(photo.image);
   const [imageError, setImageError] = useState(false);
-  const [isStatic, setIsStatic] = useState(false);
   
+  // Fix path for GitHub Pages if needed
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
-    // Set image path and check if we're in static mode
-    setImagePath(photo.image);
-    setIsStatic(isStaticExport());
+    // If path doesn't have the GitHub Pages prefix but we're on GitHub Pages
+    if ((window.location.hostname.includes('github.io') || 
+         window.location.pathname.includes('/Barelands/')) && 
+        photo.image.startsWith('/') && 
+        !photo.image.startsWith('/Barelands/')) {
+      
+      const fixedPath = `/Barelands${photo.image}`;
+      console.log(`RecentPhotoCard: Setting GitHub Pages path: ${fixedPath}`);
+      setImagePath(fixedPath);
+    }
   }, [photo.image]);
   
-  // Handle image error by trying fallback path for GitHub Pages
+  // Handle image error
   const handleImageError = () => {
     console.error(`Failed to load image: ${imagePath}`);
-    
-    // Try fallback only if needed
-    if (isStatic && !imagePath.includes('/Barelands/') && imagePath.startsWith('/')) {
-      const fallbackPath = `/Barelands${imagePath}`;
-      console.log(`Trying fallback path: ${fallbackPath}`);
-      setImagePath(fallbackPath);
-    } else {
-      setImageError(true);
-    }
+    setImageError(true);
   };
-  
-  // Don't render if image failed to load
-  if (imageError) {
-    return (
-      <div className="bg-zinc-800 rounded-lg p-4 aspect-square flex items-center justify-center">
-        <p className="text-zinc-500 text-sm">Image unavailable</p>
-      </div>
-    );
-  }
   
   return (
     <div className="relative aspect-square overflow-hidden rounded-lg group">
       <Link href={`/portfolio?photo=${photo.id}`}>
-        <Image
-          src={imagePath}
-          alt={photo.title}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={handleImageError}
-          unoptimized
-        />
+        {imageError ? (
+          <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
+            <p className="text-zinc-500 text-sm">Image unavailable</p>
+          </div>
+        ) : (
+          <Image
+            src={imagePath}
+            alt={photo.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={handleImageError}
+            unoptimized
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4">
           <h3 className="text-white text-lg font-medium">{photo.title}</h3>
           <p className="text-zinc-300 text-sm">{photo.location}</p>
@@ -212,37 +225,32 @@ function BlogPostCard({ post }: { post: any }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
-    // Set initial image path
-    setImagePath(post.coverImage);
-    
-    // Add GitHub Pages prefix if needed
-    if (window.location.pathname.includes('/Barelands/') && 
+    // Fix path for GitHub Pages if needed
+    if ((window.location.hostname.includes('github.io') || 
+         window.location.pathname.includes('/Barelands/')) && 
         post.coverImage.startsWith('/') && 
         !post.coverImage.startsWith('/Barelands/')) {
-      setImagePath(`/Barelands${post.coverImage}`);
+      
+      const fixedPath = `/Barelands${post.coverImage}`;
+      console.log(`BlogPostCard: Setting GitHub Pages path: ${fixedPath}`);
+      setImagePath(fixedPath);
     }
   }, [post.coverImage]);
   
-  // Handle image error by trying fallback path for GitHub Pages
+  // Handle image error
   const handleImageError = () => {
     console.error(`Failed to load blog image: ${imagePath}`);
-    
-    // Only try fallback if not already tried
-    if (!imagePath.includes('/Barelands/') && 
-        imagePath.startsWith('/') && 
-        window.location.pathname.includes('/Barelands/')) {
-      const fallbackPath = `/Barelands${imagePath}`;
-      console.log(`Trying fallback blog image path: ${fallbackPath}`);
-      setImagePath(fallbackPath);
-    } else {
-      setImageError(true);
-    }
+    setImageError(true);
   };
 
   return (
     <div className="flex flex-col space-y-4">
       <div className="relative aspect-video rounded-lg overflow-hidden">
-        {!imageError ? (
+        {imageError ? (
+          <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
+            <p className="text-zinc-500">Image unavailable</p>
+          </div>
+        ) : (
           <Image
             src={imagePath}
             alt={post.title}
@@ -251,10 +259,6 @@ function BlogPostCard({ post }: { post: any }) {
             onError={handleImageError}
             unoptimized
           />
-        ) : (
-          <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
-            <p className="text-zinc-500">Image unavailable</p>
-          </div>
         )}
       </div>
       <div>

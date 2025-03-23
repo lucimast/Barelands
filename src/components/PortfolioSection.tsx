@@ -11,6 +11,7 @@ import { filterValidPhotos } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { FiMaximize, FiMinimize, FiX } from "react-icons/fi";
 import { isStaticExport, getStaticPhotoData } from "@/lib/static-data";
+import PhotoItem from "@/components/PhotoItem";
 
 export default function PortfolioSection() {
   const [activeCategory, setActiveCategory] = useState("All");
@@ -22,21 +23,29 @@ export default function PortfolioSection() {
   const [isHomepage, setIsHomepage] = useState(false);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [isStatic, setIsStatic] = useState(false);
+  const photosLoadedRef = useRef(false);
 
   // Check if we're on the homepage and if we're in static export
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // More comprehensive check for homepage
+      // More comprehensive check for GitHub Pages URL structure
       const path = window.location.pathname;
-      const isHomepagePath = path === '/' || 
+      // All possible homepage URL patterns
+      const isRootPath = path === '/' || 
                          path === '/index.html' || 
-                         path === '' ||
-                         path === '/Barelands/' ||
-                         path === '/Barelands/index.html' ||
-                         path === '/Barelands';
-                         
-      setIsHomepage(isHomepagePath);
-      setIsStatic(isStaticExport());
+                         path === '';
+      const isGitHubPagesRoot = path === '/Barelands/' || 
+                                path === '/Barelands/index.html' || 
+                                path === '/Barelands' ||
+                                path === '/Barelands/index';
+      
+      // Set homepage flag
+      const homepageStatus = isRootPath || isGitHubPagesRoot;
+      setIsHomepage(homepageStatus);
+      
+      // Check the static environment
+      const staticStatus = isStaticExport();
+      setIsStatic(staticStatus);
       
       // Check for photo ID in URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -45,31 +54,18 @@ export default function PortfolioSection() {
         setSelectedPhotoId(photoId);
       }
       
-      console.log(`Portfolio init path: ${path}, isHomepage: ${isHomepagePath}`);
+      console.log(`PortfolioSection init - Path: ${path}, isHomepage: ${homepageStatus}, isStatic: ${staticStatus}`);
     }
   }, []);
 
-  // Handle category change without triggering a full refetch
-  const handleCategoryChange = (category: string) => {
-    console.log(`Changing category to: ${category}`);
-    setActiveCategory(category);
-    
-    // Apply category filter directly without refetching photos
-    if (category === "All") {
-      console.log(`Showing all ${allPhotos.length} photos`);
-      setFilteredItems(allPhotos);
-    } else {
-      const filtered = allPhotos.filter(item => item.category === category);
-      console.log(`Filtered to ${filtered.length} photos in category: ${category}`);
-      setFilteredItems(filtered);
-    }
-    
-    // Track category filter event
-    trackEvent('category_filter', { category });
-  };
-
   // Fetch photos from API or static data - separated from category change
   useEffect(() => {
+    // Only fetch once on component mount
+    if (photosLoadedRef.current) {
+      console.log("Photos already loaded, skipping fetch");
+      return;
+    }
+    
     const fetchPhotos = async () => {
       try {
         setIsLoading(true);
@@ -81,17 +77,50 @@ export default function PortfolioSection() {
           // Use static data instead of API
           console.log("Using static photo data");
           validPhotos = await getStaticPhotoData();
+          
+          // Fix paths for GitHub Pages directly if needed
+          if (typeof window !== 'undefined') {
+            const needsPathFix = window.location.hostname.includes('github.io') || 
+                window.location.pathname.includes('/Barelands/');
+            
+            if (needsPathFix) {
+              validPhotos = validPhotos.map(photo => {
+                if (photo.image && photo.image.startsWith('/') && !photo.image.startsWith('/Barelands/')) {
+                  return {
+                    ...photo,
+                    image: `/Barelands${photo.image}`
+                  };
+                }
+                return photo;
+              });
+              
+              console.log("Portfolio: Fixed GitHub Pages paths");
+            }
+          }
         } else {
           // Use API in development mode
-          const response = await fetch('/api/photos');
-          
-          if (!response.ok) {
-            throw new Error('Failed to fetch photos');
+          try {
+            const response = await fetch('/api/photos');
+            
+            if (!response.ok) {
+              throw new Error(`API responded with status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            validPhotos = filterValidPhotos(data);
+          } catch (apiError) {
+            console.error('API fetch failed, falling back to static data:', apiError);
+            // Fallback to static data even in development if API fails
+            validPhotos = await getStaticPhotoData();
           }
-          
-          const data = await response.json();
-          validPhotos = filterValidPhotos(data);
         }
+        
+        if (!validPhotos || validPhotos.length === 0) {
+          console.error("No photos loaded, throwing error");
+          throw new Error("No photos could be loaded");
+        }
+        
+        console.log(`Loaded ${validPhotos.length} photos`);
         
         // On homepage, filter to only show featured photos
         // On portfolio page, show all photos
@@ -99,19 +128,20 @@ export default function PortfolioSection() {
           ? validPhotos.filter(photo => photo.featured) 
           : validPhotos;
         
-        console.log(`Loaded ${photosToDisplay.length} photos, isHomepage: ${isHomepage}`);
+        console.log(`Photos to display: ${photosToDisplay.length}, isHomepage: ${isHomepage}`);
         
-        // Set all photos and then filter by active category
+        // Set allPhotos first
         setAllPhotos(photosToDisplay);
         
-        // Apply category filter
+        // Then apply initial category filter
         if (activeCategory === "All") {
           setFilteredItems(photosToDisplay);
         } else {
-          setFilteredItems(photosToDisplay.filter((photo) => photo.category === activeCategory));
+          setFilteredItems(photosToDisplay.filter(photo => photo.category === activeCategory));
         }
         
         setError(null);
+        photosLoadedRef.current = true;
       } catch (err) {
         console.error('Error fetching photos:', err);
         setError('Failed to load photos. Please try again.');
@@ -122,7 +152,39 @@ export default function PortfolioSection() {
     };
 
     fetchPhotos();
-  }, [isHomepage, isStatic]); // Removed activeCategory dependency to prevent refetching on category change
+  }, [isHomepage, isStatic, activeCategory]);
+
+  // Handle category change without fetching data again
+  const handleCategoryChange = (category: string) => {
+    console.log(`Category changed to: ${category}, refiltering photos from ${allPhotos.length} items`);
+    setActiveCategory(category);
+    
+    // Only filter if we have photos to filter
+    if (allPhotos.length === 0) {
+      console.log("No photos to filter");
+      return;
+    }
+    
+    // Apply category filter
+    if (category === "All") {
+      setFilteredItems(allPhotos);
+    } else {
+      const filtered = allPhotos.filter(photo => photo.category === category);
+      console.log(`Filtered to ${filtered.length} photos for category: ${category}`);
+      setFilteredItems(filtered);
+    }
+    
+    // Track category filter event
+    trackEvent('category_filter', { category });
+  };
+
+  // Manual retry function
+  const retryFetch = () => {
+    console.log("Manual retry initiated");
+    setIsLoading(true);
+    setError(null);
+    photosLoadedRef.current = false; // Reset the loaded flag
+  };
 
   const breakpointColumnsObj = {
     default: 3,
@@ -131,6 +193,7 @@ export default function PortfolioSection() {
     640: 1
   };
 
+  // Render the portfolio section
   return (
     <section id="portfolio" className="py-24 bg-zinc-800">
       <div className="container mx-auto px-4">
@@ -178,7 +241,7 @@ export default function PortfolioSection() {
           <div className="text-center py-12">
             <p className="text-red-400 mb-4">{error}</p>
             <button 
-              onClick={() => window.location.reload()}
+              onClick={retryFetch}
               className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded text-sm"
             >
               Try Again
@@ -215,274 +278,5 @@ export default function PortfolioSection() {
         )}
       </div>
     </section>
-  );
-}
-
-function PhotoItem({ item, selectedPhotoId }: { item: Photo, selectedPhotoId: string | null }) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // Default to assuming landscape orientation
-  const [isPortrait, setIsPortrait] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const fullscreenRef = useRef<HTMLDivElement>(null);
-  const [imagePath, setImagePath] = useState<string>(item.image);
-  const [attemptedFallback, setAttemptedFallback] = useState(false);
-
-  // Check if the image is portrait-oriented and handle GitHub Pages paths
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // First, ensure we have the correct path for GitHub Pages
-      let currentPath = item.image;
-      
-      // Fix path for GitHub Pages if needed
-      if (isStaticExport() && 
-          !currentPath.includes('/Barelands/') && 
-          currentPath.startsWith('/')) {
-        currentPath = `/Barelands${currentPath}`;
-        setImagePath(currentPath);
-      } else {
-        setImagePath(currentPath);
-      }
-      
-      // Check orientation
-      const checkImageOrientation = () => {
-        const img = document.createElement('img');
-        img.onload = () => {
-          setIsPortrait(img.height > img.width);
-          setImageError(false);
-        };
-        img.onerror = () => {
-          // If we're on GitHub Pages and haven't tried the fallback path
-          if (isStaticExport() && 
-              !attemptedFallback && 
-              !currentPath.includes('/Barelands/') && 
-              currentPath.startsWith('/')) {
-            
-            setAttemptedFallback(true);
-            const fallbackPath = `/Barelands${currentPath}`;
-            console.log(`Trying fallback path: ${fallbackPath}`);
-            setImagePath(fallbackPath);
-          } else {
-            setImageError(true);
-          }
-        };
-        img.src = currentPath;
-      };
-      
-      checkImageOrientation();
-    }
-  }, [item.image, attemptedFallback]);
-
-  // Auto-open dialog if this item matches the selected photo ID
-  useEffect(() => {
-    if (selectedPhotoId && selectedPhotoId === item.id) {
-      setIsDialogOpen(true);
-    }
-  }, [selectedPhotoId, item.id]);
-
-  // Track photo view event when dialog opens
-  useEffect(() => {
-    if (isDialogOpen) {
-      trackEvent('photo_view', { 
-        photo_id: item.id,
-        photo_title: item.title,
-        photo_category: item.category 
-      });
-    }
-  }, [isDialogOpen, item]);
-
-  // Add protections for the fullscreen mode
-  useEffect(() => {
-    if (isFullscreen) {
-      // Prevent screenshots and right-clicks
-      const handleKeyDown = (e: KeyboardEvent) => {
-        // Prevent print screen and other screenshot shortcuts
-        if (
-          (e.key === 'PrintScreen') || 
-          (e.ctrlKey && e.key === 'P') || 
-          (e.ctrlKey && e.key === 'p') ||
-          (e.metaKey && e.key === 'P') || 
-          (e.metaKey && e.key === 'p') ||
-          (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-          (e.ctrlKey && e.shiftKey && e.key === 'i') ||
-          (e.metaKey && e.shiftKey && e.key === 'I') ||
-          (e.metaKey && e.shiftKey && e.key === 'i')
-        ) {
-          e.preventDefault();
-          return false;
-        }
-        
-        // Close fullscreen on Escape
-        if (e.key === 'Escape') {
-          setIsFullscreen(false);
-        }
-      };
-      
-      const handleContextMenu = (e: MouseEvent) => {
-        e.preventDefault();
-        return false;
-      };
-      
-      window.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('contextmenu', handleContextMenu);
-      
-      // Disable selection
-      document.body.style.userSelect = 'none';
-      document.body.style.webkitUserSelect = 'none';
-      
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-        window.removeEventListener('contextmenu', handleContextMenu);
-        document.body.style.userSelect = '';
-        document.body.style.webkitUserSelect = '';
-      };
-    }
-  }, [isFullscreen]);
-
-  // Toggle fullscreen mode
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
-
-  // Don't render if image failed to load
-  if (imageError) {
-    return null;
-  }
-
-  return (
-    <>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <div className="group relative cursor-pointer overflow-hidden rounded-lg">
-            {/* Use auto aspect ratio to adapt to image orientation */}
-            <div className={`${isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'} w-full relative`}>
-              <Image
-                src={imagePath}
-                alt={item.title}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                onError={() => setImageError(true)}
-                unoptimized
-                style={{ pointerEvents: 'none' }}
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4">
-              <h3 className="text-white text-lg font-medium">{item.title}</h3>
-              <p className="text-zinc-300 text-sm">{item.location}</p>
-            </div>
-          </div>
-        </DialogTrigger>
-        {isDialogOpen && (
-          <DialogContent className="sm:max-w-4xl bg-zinc-900 border-zinc-800">
-            <DialogTitle className="sr-only">{item.title}</DialogTitle>
-            <div className={`grid ${isPortrait ? 'md:grid-cols-[40%_60%]' : 'md:grid-cols-[60%_40%]'} gap-6`}>
-              <div className={`relative ${isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'} w-full`}>
-                <Image
-                  src={imagePath}
-                  alt={item.title}
-                  fill
-                  className="object-cover rounded-md"
-                  onError={() => setImageError(true)}
-                  unoptimized
-                  style={{ pointerEvents: 'none' }}
-                />
-                <Button 
-                  className="absolute top-2 right-2 p-2 rounded-full bg-black/70 hover:bg-black/90"
-                  size="icon"
-                  variant="ghost"
-                  onClick={toggleFullscreen}
-                  title="View fullscreen"
-                >
-                  <FiMaximize className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex flex-col justify-center">
-                <h3 className="text-2xl font-bold mb-2">{item.title}</h3>
-                <p className="text-zinc-400 mb-4">{item.location}</p>
-                <p className="text-zinc-300">{item.description}</p>
-                <div className="mt-6 pt-6 border-t border-zinc-800">
-                  <h4 className="text-sm font-medium text-zinc-400 mb-2">Category</h4>
-                  <span className="inline-block px-3 py-1 bg-zinc-800 rounded-full text-xs">
-                    {item.category}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
-
-      {/* Fullscreen Overlay */}
-      {isFullscreen && (
-        <div 
-          ref={fullscreenRef}
-          className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
-          onClick={() => setIsFullscreen(false)}
-          style={{ 
-            userSelect: 'none', 
-            WebkitUserSelect: 'none',
-            msUserSelect: 'none',
-            pointerEvents: 'all' 
-          }}
-        >
-          <div 
-            className="relative w-full h-full flex items-center justify-center p-4"
-            style={{ 
-              touchAction: 'none',
-              pointerEvents: 'all'
-            }}
-          >
-            <Image
-              src={imagePath}
-              alt={item.title}
-              fill
-              className={`${isPortrait ? 'object-contain' : 'object-contain'}`}
-              onError={() => setImageError(true)}
-              unoptimized
-              draggable={false}
-              style={{ 
-                pointerEvents: 'none', 
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                msUserSelect: 'none',
-              }}
-              onContextMenu={(e) => e.preventDefault()}
-              priority
-            />
-            <div className="absolute top-4 right-4 flex space-x-2">
-              <Button 
-                className="p-2 rounded-full bg-black/70 hover:bg-black/90 border border-zinc-700"
-                size="icon"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsFullscreen(false);
-                }}
-                title="Exit fullscreen"
-              >
-                <FiMinimize className="h-5 w-5" />
-              </Button>
-              <Button 
-                className="p-2 rounded-full bg-black/70 hover:bg-black/90 border border-zinc-700"
-                size="icon"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsFullscreen(false);
-                  setIsDialogOpen(false);
-                }}
-                title="Close"
-              >
-                <FiX className="h-5 w-5" />
-              </Button>
-            </div>
-            <div className="absolute bottom-4 left-4 right-4 text-center bg-black/50 p-2 rounded-md backdrop-blur-sm">
-              <h3 className="text-white font-medium">{item.title}</h3>
-              <p className="text-zinc-300 text-sm">{item.location}</p>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
   );
 }
