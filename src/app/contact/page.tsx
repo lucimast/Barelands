@@ -31,6 +31,7 @@ const FORMSPREE_ENDPOINT = "https://formspree.io/f/mgelejpl";
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -65,23 +66,15 @@ export default function ContactPage() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send message');
-      }
-      
-      // Track the event
+      // Track the event before submitting the form
       trackEvent('contact_form_submit', {
         subject: data.subject
       });
+      
+      // Submit the form directly to FormSpree
+      if (formRef.current) {
+        formRef.current.submit();
+      }
       
       // Show success message
       toast.success("Your message has been sent successfully!");
@@ -140,7 +133,18 @@ export default function ContactPage() {
               </div>
             ) : (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form 
+                  ref={formRef}
+                  action={FORMSPREE_ENDPOINT} 
+                  method="POST"
+                  onSubmit={form.handleSubmit(onSubmit)} 
+                  className="space-y-6"
+                >
+                  {/* Hidden fields for FormSpree configuration */}
+                  <input type="hidden" name="_subject" value="New contact from Barelands website" />
+                  <input type="hidden" name="_format" value="plain" />
+                  <input type="text" name="_gotcha" style={{ display: 'none' }} />
+                  
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
