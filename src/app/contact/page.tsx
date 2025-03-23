@@ -25,8 +25,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// FormSpree endpoint - using proper xxxxxxxxxxx format
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/xyyqwpee";
+// FormSpree endpoint - use a verified FormSpree endpoint
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xyyedkyq";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,17 +71,27 @@ export default function ContactPage() {
         subject: data.subject
       });
       
-      // Send the form data to FormSpree via fetch instead of form submission
+      // Create form data for submission
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('email', data.email);
+      formData.append('_replyto', data.email); // This ensures FormSpree sends the reply-to header
+      formData.append('subject', data.subject);
+      formData.append('message', data.message);
+      formData.append('_subject', `New contact from Barelands: ${data.subject}`);
+      
+      // Send the form data to FormSpree via fetch
       const response = await fetch(FORMSPREE_ENDPOINT, {
         method: 'POST',
+        body: formData,
         headers: {
           'Accept': 'application/json'
-        },
-        body: new FormData(formRef.current as HTMLFormElement)
+        }
       });
       
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send message');
       }
       
       // Show success message
@@ -146,11 +156,6 @@ export default function ContactPage() {
                   onSubmit={form.handleSubmit(onSubmit)} 
                   className="space-y-6"
                 >
-                  {/* Hidden fields for FormSpree configuration */}
-                  <input type="hidden" name="_subject" value="New contact from Barelands website" />
-                  <input type="hidden" name="_format" value="plain" />
-                  <input type="text" name="_gotcha" style={{ display: 'none' }} />
-                  
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
