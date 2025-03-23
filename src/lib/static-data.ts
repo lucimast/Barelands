@@ -44,6 +44,74 @@ export async function getStaticSlideshowPhotos(): Promise<Photo[]> {
 }
 
 /**
+ * Utility function to fix image paths for GitHub Pages
+ */
+export function fixImagePathsForGitHubPages(photos: Photo[]): Photo[] {
+  // Only run in client-side code
+  if (typeof window === 'undefined') {
+    return photos;
+  }
+  
+  // Check if we're on GitHub Pages
+  const isGitHubPages = isStaticExport();
+  
+  // Only fix paths if we're on GitHub Pages
+  if (!isGitHubPages) {
+    console.log("Not on GitHub Pages, keeping original paths");
+    return photos;
+  }
+  
+  // Get the base path (repository name) from the URL
+  const path = window.location.pathname;
+  let basePath = '';
+  
+  // Check for various GitHub Pages URL patterns
+  if (path.includes('/Barelands/')) {
+    basePath = '/Barelands';
+  } else if (path.startsWith('/Barelands')) {
+    basePath = '/Barelands';
+  } else if (window.location.hostname.includes('github.io') || 
+             window.location.hostname.includes('barelands') ||
+             window.location.hostname.includes('lucimast')) {
+    // We're on a custom domain or github.io domain, but without the repo name in path
+    // For project sites on custom domains
+    basePath = '/Barelands';
+  }
+  
+  console.log(`GitHub Pages path fixing - Base path: "${basePath}"`);
+  
+  // No need to fix if we're not on a path with a base
+  if (!basePath) {
+    return photos;
+  }
+  
+  // Fix image paths by adding the base path if needed
+  const fixedPhotos = photos.map(photo => {
+    if (!photo.image) return photo; // Skip if no image
+    
+    // If already has http or https, don't modify
+    if (photo.image.startsWith('http')) {
+      return photo;
+    }
+    
+    // Only fix relative paths that don't already have the basePath
+    if (photo.image.startsWith('/') && !photo.image.startsWith(basePath)) {
+      const fixedPath = `${basePath}${photo.image}`;
+      console.log(`Fixed path: "${photo.image}" → "${fixedPath}"`);
+      
+      return {
+        ...photo,
+        image: fixedPath
+      };
+    }
+    
+    return photo;
+  });
+  
+  return fixedPhotos;
+}
+
+/**
  * Detects if we're in a static export environment
  */
 export function isStaticExport(): boolean {
