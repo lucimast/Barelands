@@ -25,22 +25,15 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Google Forms endpoint - more reliable than FormSpree
-const FORM_ENDPOINT = "https://docs.google.com/forms/d/e/1FAIpQLSemKKp5Z4TT7UXB9UoH0Z4TMCOiYvmg5HjyJtqf8IrzpVrJhA/formResponse";
-
-// Field mappings for Google Forms
-const FIELD_MAPPINGS = {
-  name: "entry.1262687114",
-  email: "entry.1333325337", 
-  subject: "entry.1445398066",
-  message: "entry.493868231"
-};
+// Web3Forms endpoint - simple, reliable email service for static sites
+const FORM_ENDPOINT = "https://api.web3forms.com/submit";
+// Get your access key from https://web3forms.com/
+const ACCESS_KEY = "36b168ee-7d7e-43b7-8054-b5de4c9220a4";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -70,18 +63,50 @@ export default function ContactPage() {
     }
   }, [form]);
 
-  // Setup message listener to detect when the form is submitted
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data === 'form-submitted') {
+  // Handle form submission
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    
+    try {
+      // Track the event
+      trackEvent('contact_form_submit', {
+        subject: data.subject
+      });
+      
+      const formData = {
+        access_key: ACCESS_KEY,
+        name: data.name,
+        email: data.email,
+        subject: data.subject,
+        message: data.message,
+        from_page: window.location.href
+      };
+
+      const response = await fetch(FORM_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success("Your message has been sent successfully!");
         setSuccess(true);
         form.reset();
+      } else {
+        throw new Error(result.message || "Something went wrong");
       }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [form]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error("Failed to send your message. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <main className="min-h-screen pt-24 pb-16">
@@ -130,49 +155,9 @@ export default function ContactPage() {
               <Form {...form}>
                 <form 
                   ref={formRef}
-                  method="POST"
-                  action={FORM_ENDPOINT}
-                  target="hidden_iframe"
-                  onSubmit={(e) => {
-                    const isValid = form.formState.isValid;
-                    if (!isValid) {
-                      e.preventDefault(); // Don't submit if validation fails
-                      return;
-                    }
-                    
-                    // Track the form submission event
-                    trackEvent('contact_form_submit', {
-                      subject: form.getValues().subject
-                    });
-                    
-                    // Let the form submit to Google Forms
-                    setIsSubmitting(true);
-                    
-                    // Automatically show success after a short timeout
-                    // This is a fallback in case the iframe message doesn't work
-                    setTimeout(() => {
-                      setIsSubmitting(false);
-                      setSuccess(true);
-                      form.reset();
-                    }, 2000);
-                  }}
+                  onSubmit={form.handleSubmit(onSubmit)} 
                   className="space-y-6"
                 >
-                  {/* Hidden iframe to prevent page navigation */}
-                  <iframe 
-                    ref={iframeRef}
-                    name="hidden_iframe" 
-                    id="hidden_iframe" 
-                    style={{ display: 'none' }} 
-                    onLoad={() => {
-                      if (isSubmitting) {
-                        setIsSubmitting(false);
-                        setSuccess(true);
-                        form.reset();
-                      }
-                    }}
-                  />
-                  
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
@@ -187,7 +172,6 @@ export default function ContactPage() {
                                 placeholder="John Doe"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
-                                name={FIELD_MAPPINGS.name}
                               />
                             </div>
                           </FormControl>
@@ -209,7 +193,6 @@ export default function ContactPage() {
                                 placeholder="johndoe@example.com"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
-                                name={FIELD_MAPPINGS.email}
                               />
                             </div>
                           </FormControl>
@@ -229,7 +212,6 @@ export default function ContactPage() {
                             placeholder="What is your message about?"
                             className="bg-zinc-800 border-zinc-700"
                             {...field}
-                            name={FIELD_MAPPINGS.subject}
                           />
                         </FormControl>
                         <FormMessage />
@@ -250,7 +232,6 @@ export default function ContactPage() {
                               placeholder="Please provide details about your inquiry..."
                               className="pl-10 bg-zinc-800 border-zinc-700"
                               {...field}
-                              name={FIELD_MAPPINGS.message}
                             />
                           </div>
                         </FormControl>
