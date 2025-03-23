@@ -10,6 +10,7 @@ import { trackEvent } from "@/lib/analytics";
 import { filterValidPhotos } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { FiMaximize, FiMinimize, FiX } from "react-icons/fi";
+import { isStaticExport, getStaticPhotoData } from "@/lib/static-data";
 
 export default function PortfolioSection() {
   const [activeCategory, setActiveCategory] = useState("All");
@@ -20,11 +21,13 @@ export default function PortfolioSection() {
   const [error, setError] = useState<string | null>(null);
   const [isHomepage, setIsHomepage] = useState(false);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  const [isStatic, setIsStatic] = useState(false);
 
-  // Check if we're on the homepage
+  // Check if we're on the homepage and if we're in static export
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsHomepage(window.location.pathname === '/');
+      setIsHomepage(window.location.pathname === '/' || window.location.pathname === '/index.html' || window.location.pathname === '/Barelands/');
+      setIsStatic(isStaticExport());
       
       // Check for photo ID in URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -35,19 +38,29 @@ export default function PortfolioSection() {
     }
   }, []);
 
-  // Fetch photos from API
+  // Fetch photos from API or static data
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/photos');
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch photos');
+        let validPhotos: Photo[] = [];
+        
+        // Check if we're in static export mode
+        if (isStatic) {
+          // Use static data instead of API
+          validPhotos = await getStaticPhotoData();
+        } else {
+          // Use API in development mode
+          const response = await fetch('/api/photos');
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch photos');
+          }
+          
+          const data = await response.json();
+          validPhotos = filterValidPhotos(data);
         }
-        
-        const data = await response.json();
-        const validPhotos = filterValidPhotos(data);
         
         // On homepage, filter to only show featured photos
         // On portfolio page, show all photos
@@ -75,7 +88,7 @@ export default function PortfolioSection() {
     };
 
     fetchPhotos();
-  }, [activeCategory, isHomepage]);
+  }, [activeCategory, isHomepage, isStatic]);
 
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category);

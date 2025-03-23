@@ -8,6 +8,7 @@ import Link from "next/link";
 import { photos, Photo } from "@/lib/data";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { filterValidPhotos } from "@/lib/storage";
+import { isStaticExport, getStaticSlideshowPhotos } from "@/lib/static-data";
 
 export default function HeroSection() {
   const [isMounted, setIsMounted] = useState(false);
@@ -17,13 +18,27 @@ export default function HeroSection() {
   const [isLoading, setIsLoading] = useState(true);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [photoOrientations, setPhotoOrientations] = useState<Record<string, 'portrait' | 'landscape'>>({});
+  const [isStatic, setIsStatic] = useState(false);
+
+  // Check if we're in static export mode
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsStatic(isStaticExport());
+    }
+  }, []);
 
   // Initialize slideshow photos and handle updates
   useEffect(() => {
     // Function to get photos for the slideshow - specifically Kallur, Patagonia and Iguazu
     const getSpecificPhotos = async () => {
       try {
-        // Fetch photos from API
+        // Check if we're in static export mode
+        if (isStatic) {
+          const staticPhotos = await getStaticSlideshowPhotos();
+          return staticPhotos;
+        }
+
+        // If not static, try to fetch from API
         const response = await fetch('/api/photos');
         if (!response.ok) {
           throw new Error('Failed to fetch photos');
@@ -37,7 +52,8 @@ export default function HeroSection() {
         
         if (usablePhotos.length === 0) {
           console.warn('No valid photos found for slideshow');
-          return [];
+          // Fall back to static data if API fails
+          return await getStaticSlideshowPhotos();
         }
         
         // SPECIFICALLY look for these three photos by title as requested by the user
@@ -67,7 +83,8 @@ export default function HeroSection() {
         return usablePhotos.slice(0, Math.min(3, usablePhotos.length));
       } catch (error) {
         console.error("Error fetching photos:", error);
-        return [];
+        // Fall back to static data if API fails
+        return await getStaticSlideshowPhotos();
       }
     };
     
@@ -84,11 +101,11 @@ export default function HeroSection() {
     };
     
     fetchData();
-  }, [currentSlide, failedImages]);
+  }, [currentSlide, failedImages, isStatic]);
 
   // Add a separate effect to refetch when URL changes (which happens after revalidation)
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || isStatic) return; // Skip API calls in static export mode
     
     const fetchPhotos = async () => {
       try {
@@ -134,7 +151,7 @@ export default function HeroSection() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isMounted]);
+  }, [isMounted, isStatic]);
 
   // Detect photo orientations
   useEffect(() => {
