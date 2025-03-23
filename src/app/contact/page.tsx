@@ -25,8 +25,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// FormSpree endpoint - use a verified FormSpree endpoint
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/xyyedkyq";
+// FormSpree endpoint - use your actual email for direct endpoint
+const FORMSPREE_ENDPOINT = "https://formspree.io/lucimast@gmail.com";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,48 +62,17 @@ export default function ContactPage() {
   }, [form]);
 
   // Handle form submission
-  const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true);
+  const onSubmit = (data: FormValues) => {
+    // Track the event
+    trackEvent('contact_form_submit', {
+      subject: data.subject
+    });
     
-    try {
-      // Track the event
-      trackEvent('contact_form_submit', {
-        subject: data.subject
-      });
-      
-      // Create form data for submission
-      const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('email', data.email);
-      formData.append('_replyto', data.email); // This ensures FormSpree sends the reply-to header
-      formData.append('subject', data.subject);
-      formData.append('message', data.message);
-      formData.append('_subject', `New contact from Barelands: ${data.subject}`);
-      
-      // Send the form data to FormSpree via fetch
-      const response = await fetch(FORMSPREE_ENDPOINT, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send message');
-      }
-      
-      // Show success message
-      toast.success("Your message has been sent successfully!");
-      setSuccess(true);
-      form.reset();
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error("Failed to send your message. Please try again later.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Don't need to do anything else here - the form will submit directly to FormSpree
+    // This is the most reliable method as it avoids all AJAX/fetch complexities
+    
+    // We'll show the success message after redirect or in iframe
+    return true; // Allow the form to actually submit
   };
 
   return (
@@ -153,9 +122,31 @@ export default function ContactPage() {
               <Form {...form}>
                 <form 
                   ref={formRef}
-                  onSubmit={form.handleSubmit(onSubmit)} 
+                  method="POST"
+                  action={FORMSPREE_ENDPOINT}
+                  target="_blank" 
+                  onSubmit={(e) => {
+                    const isValid = form.formState.isValid;
+                    if (!isValid) {
+                      e.preventDefault(); // Don't submit if validation fails
+                      return;
+                    }
+                    // Get the form data
+                    const data = form.getValues();
+                    // Track the event before submission
+                    onSubmit(data);
+                    // After submission is complete
+                    setTimeout(() => {
+                      setSuccess(true);
+                      form.reset();
+                    }, 1000);
+                  }}
                   className="space-y-6"
                 >
+                  {/* Hidden fields for FormSpree configuration */}
+                  <input type="hidden" name="_subject" value="New contact from Barelands website" />
+                  <input type="text" name="_gotcha" style={{ display: 'none' }} />
+                  
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
