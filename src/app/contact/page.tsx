@@ -25,10 +25,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Web3Forms endpoint - simple, reliable email service for static sites
-const FORM_ENDPOINT = "https://api.web3forms.com/submit";
-// Get your access key from https://web3forms.com/
-const ACCESS_KEY = "36b168ee-7d7e-43b7-8054-b5de4c9220a4";
+// FormSpree endpoint - updated to use the correct ID or direct email format
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mgelejpl";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,33 +71,57 @@ export default function ContactPage() {
         subject: data.subject
       });
       
-      const formData = {
-        access_key: ACCESS_KEY,
-        name: data.name,
-        email: data.email,
-        subject: data.subject,
-        message: data.message,
-        from_page: window.location.href
-      };
-
-      const response = await fetch(FORM_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        toast.success("Your message has been sent successfully!");
-        setSuccess(true);
-        form.reset();
-      } else {
-        throw new Error(result.message || "Something went wrong");
+      // Try to submit via our API route first
+      let apiSuccess = false;
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+          apiSuccess = true;
+        } else {
+          console.warn('API submission failed, trying FormSpree directly');
+        }
+      } catch (apiError) {
+        console.error('Error with API submission:', apiError);
       }
+      
+      // If API submission failed, try FormSpree directly
+      if (!apiSuccess && formRef.current) {
+        try {
+          const formData = new FormData();
+          formData.append('name', data.name);
+          formData.append('email', data.email);
+          formData.append('_replyto', data.email);
+          formData.append('subject', data.subject);
+          formData.append('message', data.message);
+          
+          const formspreeResponse = await fetch(FORMSPREE_ENDPOINT, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (!formspreeResponse.ok) {
+            throw new Error('FormSpree submission failed');
+          }
+        } catch (formspreeError) {
+          console.error('Error with FormSpree submission:', formspreeError);
+          throw new Error('All submission methods failed');
+        }
+      }
+      
+      // Show success message
+      toast.success("Your message has been sent successfully!");
+      setSuccess(true);
+      form.reset();
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error("Failed to send your message. Please try again later.");
@@ -153,11 +175,7 @@ export default function ContactPage() {
               </div>
             ) : (
               <Form {...form}>
-                <form 
-                  ref={formRef}
-                  onSubmit={form.handleSubmit(onSubmit)} 
-                  className="space-y-6"
-                >
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" ref={formRef}>
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
