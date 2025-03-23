@@ -25,8 +25,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// FormSpree endpoint - updated to use the correct ID or direct email format
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/mgelejpl";
+// FormSpree endpoint - using direct email format which doesn't require form creation
+const FORMSPREE_ENDPOINT = "https://formspree.io/lucimast@gmail.com";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
