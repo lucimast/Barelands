@@ -25,8 +25,16 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// JotForm endpoint - most reliable option for contact forms
-const FORM_ENDPOINT = "https://form.jotform.com/241253785048058";
+// Google Forms endpoint - more reliable than FormSpree
+const FORM_ENDPOINT = "https://docs.google.com/forms/d/e/1FAIpQLSemKKp5Z4TT7UXB9UoH0Z4TMCOiYvmg5HjyJtqf8IrzpVrJhA/formResponse";
+
+// Field mappings for Google Forms
+const FIELD_MAPPINGS = {
+  name: "entry.1262687114",
+  email: "entry.1333325337", 
+  subject: "entry.1445398066",
+  message: "entry.493868231"
+};
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,6 +68,19 @@ export default function ContactPage() {
         form.setValue('message', message);
       }
     }
+  }, [form]);
+
+  // Setup message listener to detect when the form is submitted
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data === 'form-submitted') {
+        setSuccess(true);
+        form.reset();
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, [form]);
 
   return (
@@ -124,7 +145,7 @@ export default function ContactPage() {
                       subject: form.getValues().subject
                     });
                     
-                    // Let the form submit to JotForm
+                    // Let the form submit to Google Forms
                     setIsSubmitting(true);
                     
                     // Automatically show success after a short timeout
@@ -166,7 +187,7 @@ export default function ContactPage() {
                                 placeholder="John Doe"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
-                                name="q3_name"
+                                name={FIELD_MAPPINGS.name}
                               />
                             </div>
                           </FormControl>
@@ -188,7 +209,7 @@ export default function ContactPage() {
                                 placeholder="johndoe@example.com"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
-                                name="q4_email"
+                                name={FIELD_MAPPINGS.email}
                               />
                             </div>
                           </FormControl>
@@ -208,7 +229,7 @@ export default function ContactPage() {
                             placeholder="What is your message about?"
                             className="bg-zinc-800 border-zinc-700"
                             {...field}
-                            name="q5_subject"
+                            name={FIELD_MAPPINGS.subject}
                           />
                         </FormControl>
                         <FormMessage />
@@ -229,7 +250,7 @@ export default function ContactPage() {
                               placeholder="Please provide details about your inquiry..."
                               className="pl-10 bg-zinc-800 border-zinc-700"
                               {...field}
-                              name="q6_message"
+                              name={FIELD_MAPPINGS.message}
                             />
                           </div>
                         </FormControl>
