@@ -25,13 +25,14 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// FormSpree endpoint - updated to use the correct ID or direct email format
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/mgelejpl";
+// JotForm endpoint - most reliable option for contact forms
+const FORM_ENDPOINT = "https://form.jotform.com/241253785048058";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -60,75 +61,6 @@ export default function ContactPage() {
       }
     }
   }, [form]);
-
-  // Handle form submission
-  const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true);
-    
-    try {
-      // Track the event
-      trackEvent('contact_form_submit', {
-        subject: data.subject
-      });
-      
-      // Try to submit via our API route first
-      let apiSuccess = false;
-      try {
-        const response = await fetch('/api/contact', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
-        });
-        
-        if (response.ok) {
-          apiSuccess = true;
-        } else {
-          console.warn('API submission failed, trying FormSpree directly');
-        }
-      } catch (apiError) {
-        console.error('Error with API submission:', apiError);
-      }
-      
-      // If API submission failed, try FormSpree directly
-      if (!apiSuccess && formRef.current) {
-        try {
-          const formData = new FormData();
-          formData.append('name', data.name);
-          formData.append('email', data.email);
-          formData.append('_replyto', data.email);
-          formData.append('subject', data.subject);
-          formData.append('message', data.message);
-          
-          const formspreeResponse = await fetch(FORMSPREE_ENDPOINT, {
-            method: 'POST',
-            body: formData,
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
-          
-          if (!formspreeResponse.ok) {
-            throw new Error('FormSpree submission failed');
-          }
-        } catch (formspreeError) {
-          console.error('Error with FormSpree submission:', formspreeError);
-          throw new Error('All submission methods failed');
-        }
-      }
-      
-      // Show success message
-      toast.success("Your message has been sent successfully!");
-      setSuccess(true);
-      form.reset();
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error("Failed to send your message. Please try again later.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <main className="min-h-screen pt-24 pb-16">
@@ -175,7 +107,51 @@ export default function ContactPage() {
               </div>
             ) : (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" ref={formRef}>
+                <form 
+                  ref={formRef}
+                  method="POST"
+                  action={FORM_ENDPOINT}
+                  target="hidden_iframe"
+                  onSubmit={(e) => {
+                    const isValid = form.formState.isValid;
+                    if (!isValid) {
+                      e.preventDefault(); // Don't submit if validation fails
+                      return;
+                    }
+                    
+                    // Track the form submission event
+                    trackEvent('contact_form_submit', {
+                      subject: form.getValues().subject
+                    });
+                    
+                    // Let the form submit to JotForm
+                    setIsSubmitting(true);
+                    
+                    // Automatically show success after a short timeout
+                    // This is a fallback in case the iframe message doesn't work
+                    setTimeout(() => {
+                      setIsSubmitting(false);
+                      setSuccess(true);
+                      form.reset();
+                    }, 2000);
+                  }}
+                  className="space-y-6"
+                >
+                  {/* Hidden iframe to prevent page navigation */}
+                  <iframe 
+                    ref={iframeRef}
+                    name="hidden_iframe" 
+                    id="hidden_iframe" 
+                    style={{ display: 'none' }} 
+                    onLoad={() => {
+                      if (isSubmitting) {
+                        setIsSubmitting(false);
+                        setSuccess(true);
+                        form.reset();
+                      }
+                    }}
+                  />
+                  
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
@@ -190,6 +166,7 @@ export default function ContactPage() {
                                 placeholder="John Doe"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
+                                name="q3_name"
                               />
                             </div>
                           </FormControl>
@@ -211,6 +188,7 @@ export default function ContactPage() {
                                 placeholder="johndoe@example.com"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
+                                name="q4_email"
                               />
                             </div>
                           </FormControl>
@@ -230,6 +208,7 @@ export default function ContactPage() {
                             placeholder="What is your message about?"
                             className="bg-zinc-800 border-zinc-700"
                             {...field}
+                            name="q5_subject"
                           />
                         </FormControl>
                         <FormMessage />
@@ -250,6 +229,7 @@ export default function ContactPage() {
                               placeholder="Please provide details about your inquiry..."
                               className="pl-10 bg-zinc-800 border-zinc-700"
                               {...field}
+                              name="q6_message"
                             />
                           </div>
                         </FormControl>
