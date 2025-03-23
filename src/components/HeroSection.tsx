@@ -35,24 +35,6 @@ export default function HeroSection() {
         // Check if we're in static export mode
         if (isStatic) {
           const staticPhotos = await getStaticSlideshowPhotos();
-          
-          // Fix paths for GitHub Pages if needed
-          if (typeof window !== 'undefined' && 
-              window.location.hostname.includes('github.io') || 
-              window.location.pathname.includes('/Barelands/')) {
-            
-            // Ensure paths are prefixed with /Barelands if needed
-            return staticPhotos.map(photo => {
-              if (photo.image && !photo.image.includes('/Barelands/') && photo.image.startsWith('/')) {
-                return {
-                  ...photo,
-                  image: `/Barelands${photo.image}`
-                };
-              }
-              return photo;
-            });
-          }
-          
           return staticPhotos;
         }
 
@@ -234,41 +216,21 @@ export default function HeroSection() {
     goToSlide((currentSlide - 1 + slideshowPhotos.length) % slideshowPhotos.length);
   };
 
-  // Handle image loading errors
   const handleImageError = (imagePath: string) => {
     console.error("Failed to load slideshow image:", imagePath);
     
-    // Try a fallback if possible
-    if (isStatic && imagePath.startsWith('/') && !imagePath.includes('/Barelands/')) {
-      // Get the current photo
-      const currentPhoto = slideshowPhotos[currentSlide];
-      if (currentPhoto) {
-        // Update the photo's path in the slideshowPhotos array
-        const updatedPhotos = slideshowPhotos.map(photo => {
-          if (photo.id === currentPhoto.id) {
-            return {
-              ...photo,
-              image: `/Barelands${photo.image}`
-            };
-          }
-          return photo;
-        });
-        
-        setSlideshowPhotos(updatedPhotos);
-        return;
-      }
-    }
-    
-    // If we can't fix the current image, add to failed images and advance
+    // Add to failed images set
     setFailedImages(prev => {
       const updated = new Set(prev);
       updated.add(imagePath);
       return updated;
     });
     
-    // If we have multiple slides, advance to the next one
-    if (slideshowPhotos.length > 1) {
-      setCurrentSlide((prev) => (prev + 1) % slideshowPhotos.length);
+    // If the current slide image fails, advance to the next slide
+    if (slideshowPhotos.length > 1 && slideshowPhotos[currentSlide]?.image === imagePath) {
+      console.log("Advancing slide due to image load failure");
+      // Use setTimeout to avoid state update conflicts
+      setTimeout(nextSlide, 100);
     }
   };
 
@@ -322,10 +284,9 @@ export default function HeroSection() {
               alt={currentPhoto.title}
               fill
               sizes="100vw"
-              priority
+              priority={currentSlide === 0}
               className={`${photoOrientations[currentPhoto.id] === 'portrait' ? 'object-contain' : 'object-cover'}`}
               onError={() => handleImageError(currentPhoto.image)}
-              unoptimized={true}
             />
             <div className="absolute inset-0 bg-black/30" />
           </motion.div>
