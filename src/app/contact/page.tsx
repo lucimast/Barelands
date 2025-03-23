@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,23 +25,21 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Google Forms endpoint - more reliable than FormSpree
-const FORM_ENDPOINT = "https://docs.google.com/forms/d/e/1FAIpQLSemKKp5Z4TT7UXB9UoH0Z4TMCOiYvmg5HjyJtqf8IrzpVrJhA/formResponse";
+// Google Form URL - replace with your actual form URL
+const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSemKKp5Z4TT7UXB9UoH0Z4TMCOiYvmg5HjyJtqf8IrzpVrJhA/formResponse";
 
-// Field mappings for Google Forms
-const FIELD_MAPPINGS = {
-  name: "entry.1262687114",
-  email: "entry.1333325337", 
+// Google Form field IDs - replace with your actual field IDs
+const FORM_FIELDS = {
+  name: "entry.1262687114", 
+  email: "entry.1333325337",
   subject: "entry.1445398066",
   message: "entry.493868231"
 };
 
 export default function ContactPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   // Initialize the form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -53,35 +51,49 @@ export default function ContactPage() {
     },
   });
 
-  // Handle URL query parameters for pre-filling the form
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const subject = params.get('subject');
-      const message = params.get('message');
-      
-      if (subject) {
-        form.setValue('subject', subject);
-      }
-      
-      if (message) {
-        form.setValue('message', message);
-      }
-    }
-  }, [form]);
+  // Function to open Google Form in a popup window
+  const openFormInPopup = (formData: FormValues) => {
+    // Build the URL with query parameters
+    const params = new URLSearchParams();
+    params.append(FORM_FIELDS.name, formData.name);
+    params.append(FORM_FIELDS.email, formData.email);
+    params.append(FORM_FIELDS.subject, formData.subject);
+    params.append(FORM_FIELDS.message, formData.message);
 
-  // Setup message listener to detect when the form is submitted
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data === 'form-submitted') {
-        setSuccess(true);
-        form.reset();
-      }
-    };
+    // Open in a small popup window
+    const url = `${GOOGLE_FORM_URL}?${params.toString()}`;
+    const popup = window.open(
+      url, 
+      'googleform', 
+      'width=600,height=400,left=200,top=200'
+    );
+    
+    // Close popup after 2 seconds
+    setTimeout(() => {
+      if (popup) popup.close();
+    }, 2000);
+    
+    // Show success message
+    setSuccess(true);
+    form.reset();
+    setIsSubmitting(false);
+  };
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [form]);
+  // Handle form submission
+  const onSubmit = (data: FormValues) => {
+    setIsSubmitting(true);
+    
+    // Track form submission event
+    trackEvent('contact_form_submit', {
+      subject: data.subject
+    });
+    
+    // Show success toast
+    toast.success("Your message has been sent successfully!");
+    
+    // Submit form data to Google Form
+    openFormInPopup(data);
+  };
 
   return (
     <main className="min-h-screen pt-24 pb-16">
@@ -128,51 +140,7 @@ export default function ContactPage() {
               </div>
             ) : (
               <Form {...form}>
-                <form 
-                  ref={formRef}
-                  method="POST"
-                  action={FORM_ENDPOINT}
-                  target="hidden_iframe"
-                  onSubmit={(e) => {
-                    const isValid = form.formState.isValid;
-                    if (!isValid) {
-                      e.preventDefault(); // Don't submit if validation fails
-                      return;
-                    }
-                    
-                    // Track the form submission event
-                    trackEvent('contact_form_submit', {
-                      subject: form.getValues().subject
-                    });
-                    
-                    // Let the form submit to Google Forms
-                    setIsSubmitting(true);
-                    
-                    // Automatically show success after a short timeout
-                    // This is a fallback in case the iframe message doesn't work
-                    setTimeout(() => {
-                      setIsSubmitting(false);
-                      setSuccess(true);
-                      form.reset();
-                    }, 2000);
-                  }}
-                  className="space-y-6"
-                >
-                  {/* Hidden iframe to prevent page navigation */}
-                  <iframe 
-                    ref={iframeRef}
-                    name="hidden_iframe" 
-                    id="hidden_iframe" 
-                    style={{ display: 'none' }} 
-                    onLoad={() => {
-                      if (isSubmitting) {
-                        setIsSubmitting(false);
-                        setSuccess(true);
-                        form.reset();
-                      }
-                    }}
-                  />
-                  
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
@@ -187,7 +155,6 @@ export default function ContactPage() {
                                 placeholder="John Doe"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
-                                name={FIELD_MAPPINGS.name}
                               />
                             </div>
                           </FormControl>
@@ -209,7 +176,6 @@ export default function ContactPage() {
                                 placeholder="johndoe@example.com"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
                                 {...field}
-                                name={FIELD_MAPPINGS.email}
                               />
                             </div>
                           </FormControl>
@@ -229,7 +195,6 @@ export default function ContactPage() {
                             placeholder="What is your message about?"
                             className="bg-zinc-800 border-zinc-700"
                             {...field}
-                            name={FIELD_MAPPINGS.subject}
                           />
                         </FormControl>
                         <FormMessage />
@@ -250,7 +215,6 @@ export default function ContactPage() {
                               placeholder="Please provide details about your inquiry..."
                               className="pl-10 bg-zinc-800 border-zinc-700"
                               {...field}
-                              name={FIELD_MAPPINGS.message}
                             />
                           </div>
                         </FormControl>
