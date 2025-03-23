@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FiCalendar, FiMap, FiImage, FiHome } from "react-icons/fi";
 import { filterValidPhotos } from "@/lib/storage";
 import { isStaticExport, getStaticPhotoData } from "@/lib/static-data";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 // Sample blog posts data
 // In a real implementation, this would come from a CMS or API
@@ -221,6 +222,7 @@ function RecentPhotoCard({ photo }: { photo: Photo }) {
 function BlogPostCard({ post }: { post: any }) {
   const [imagePath, setImagePath] = useState<string>(post.coverImage);
   const [imageError, setImageError] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -269,8 +271,8 @@ function BlogPostCard({ post }: { post: any }) {
         <h3 className="text-xl font-medium mb-2">{post.title}</h3>
         <p className="text-zinc-400">{post.excerpt}</p>
         <div className="mt-4">
-          <Link 
-            href="#" 
+          <button
+            onClick={() => setIsDialogOpen(true)}
             className="inline-flex items-center text-zinc-300 hover:text-white text-sm"
           >
             Read more
@@ -285,7 +287,22 @@ function BlogPostCard({ post }: { post: any }) {
             >
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
-          </Link>
+          </button>
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+              <DialogTitle className="text-xl">Blog Section Under Construction</DialogTitle>
+              <DialogDescription className="text-zinc-300">
+                <p className="mb-4">
+                  Thank you for your interest in our blog! This section is currently under construction.
+                </p>
+                <p>
+                  Check back soon for exciting articles, behind-the-scenes stories, 
+                  photography tips, and updates from our landscape photography adventures.
+                </p>
+              </DialogDescription>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
