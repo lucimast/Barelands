@@ -8,7 +8,7 @@ import { photos as defaultPhotos, Photo } from '@/lib/data';
  * This function mimics the API behavior but works in static exports
  */
 export async function getStaticPhotoData(): Promise<Photo[]> {
-  return [...defaultPhotos]; // Return a copy of the photos array
+  return fixImagePathsForGitHubPages([...defaultPhotos]); // Return a copy with fixed paths
 }
 
 /**
@@ -27,7 +27,7 @@ export async function getStaticSlideshowPhotos(): Promise<Photo[]> {
   
   // If we have specific photos, return them
   if (specificPhotos.length > 0) {
-    return specificPhotos;
+    return fixImagePathsForGitHubPages([...specificPhotos]);
   }
   
   // Fallback: use featured photos
@@ -36,11 +36,49 @@ export async function getStaticSlideshowPhotos(): Promise<Photo[]> {
     .slice(0, 3);
   
   if (featuredPhotos.length > 0) {
-    return featuredPhotos;
+    return fixImagePathsForGitHubPages([...featuredPhotos]);
   }
   
   // Final fallback: first 3 photos
-  return defaultPhotos.slice(0, Math.min(3, defaultPhotos.length));
+  return fixImagePathsForGitHubPages([...defaultPhotos.slice(0, Math.min(3, defaultPhotos.length))]);
+}
+
+/**
+ * Fix image paths for GitHub Pages
+ */
+export function fixImagePathsForGitHubPages(photos: Photo[]): Photo[] {
+  // Only run in client-side code
+  if (typeof window === 'undefined') {
+    return photos;
+  }
+  
+  // Check if we're on GitHub Pages
+  const isGitHubPages = isStaticExport();
+  
+  // Only fix paths if we're on GitHub Pages
+  if (!isGitHubPages) {
+    return photos;
+  }
+  
+  // Fix image paths
+  return photos.map(photo => {
+    if (!photo.image) return photo; // Skip if no image
+    
+    // Skip if already has http/https or already has /Barelands/ prefix
+    if (photo.image.startsWith('http') || photo.image.includes('/Barelands/')) {
+      return photo;
+    }
+    
+    // Add /Barelands prefix to relative paths
+    if (photo.image.startsWith('/')) {
+      return {
+        ...photo,
+        image: `/Barelands${photo.image}`
+      };
+    }
+    
+    return photo;
+  });
 }
 
 /**
@@ -51,7 +89,8 @@ export function isStaticExport(): boolean {
   if (typeof window !== 'undefined') {
     // Check if we're on GitHub Pages (hostname includes github.io or our custom domain)
     const isGitHubPages = window.location.hostname.includes('github.io') || 
-                          window.location.hostname.includes('barelands');
+                          window.location.hostname.includes('barelands') ||
+                          window.location.hostname.includes('lucimast');
     
     // Also check for the hostname in the URL path (for GitHub Pages with repository name in URL path)
     const isRepositoryPath = window.location.pathname.includes('/Barelands/');

@@ -26,7 +26,16 @@ export default function PortfolioSection() {
   // Check if we're on the homepage and if we're in static export
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsHomepage(window.location.pathname === '/' || window.location.pathname === '/index.html' || window.location.pathname === '/Barelands/');
+      // More comprehensive check for homepage
+      const path = window.location.pathname;
+      const isHomepagePath = path === '/' || 
+                         path === '/index.html' || 
+                         path === '' ||
+                         path === '/Barelands/' ||
+                         path === '/Barelands/index.html' ||
+                         path === '/Barelands';
+                         
+      setIsHomepage(isHomepagePath);
       setIsStatic(isStaticExport());
       
       // Check for photo ID in URL
@@ -35,10 +44,31 @@ export default function PortfolioSection() {
       if (photoId) {
         setSelectedPhotoId(photoId);
       }
+      
+      console.log(`Portfolio init path: ${path}, isHomepage: ${isHomepagePath}`);
     }
   }, []);
 
-  // Fetch photos from API or static data
+  // Handle category change without triggering a full refetch
+  const handleCategoryChange = (category: string) => {
+    console.log(`Changing category to: ${category}`);
+    setActiveCategory(category);
+    
+    // Apply category filter directly without refetching photos
+    if (category === "All") {
+      console.log(`Showing all ${allPhotos.length} photos`);
+      setFilteredItems(allPhotos);
+    } else {
+      const filtered = allPhotos.filter(item => item.category === category);
+      console.log(`Filtered to ${filtered.length} photos in category: ${category}`);
+      setFilteredItems(filtered);
+    }
+    
+    // Track category filter event
+    trackEvent('category_filter', { category });
+  };
+
+  // Fetch photos from API or static data - separated from category change
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
@@ -49,6 +79,7 @@ export default function PortfolioSection() {
         // Check if we're in static export mode
         if (isStatic) {
           // Use static data instead of API
+          console.log("Using static photo data");
           validPhotos = await getStaticPhotoData();
         } else {
           // Use API in development mode
@@ -68,6 +99,9 @@ export default function PortfolioSection() {
           ? validPhotos.filter(photo => photo.featured) 
           : validPhotos;
         
+        console.log(`Loaded ${photosToDisplay.length} photos, isHomepage: ${isHomepage}`);
+        
+        // Set all photos and then filter by active category
         setAllPhotos(photosToDisplay);
         
         // Apply category filter
@@ -88,21 +122,7 @@ export default function PortfolioSection() {
     };
 
     fetchPhotos();
-  }, [activeCategory, isHomepage, isStatic]);
-
-  const handleCategoryChange = (category: string) => {
-    setActiveCategory(category);
-    
-    // Apply new category filter
-    if (category === "All") {
-      setFilteredItems(allPhotos);
-    } else {
-      setFilteredItems(allPhotos.filter(item => item.category === category));
-    }
-    
-    // Track category filter event
-    trackEvent('category_filter', { category });
-  };
+  }, [isHomepage, isStatic]); // Removed activeCategory dependency to prevent refetching on category change
 
   const breakpointColumnsObj = {
     default: 3,
@@ -205,25 +225,53 @@ function PhotoItem({ item, selectedPhotoId }: { item: Photo, selectedPhotoId: st
   const [imageError, setImageError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fullscreenRef = useRef<HTMLDivElement>(null);
+  const [imagePath, setImagePath] = useState<string>(item.image);
+  const [attemptedFallback, setAttemptedFallback] = useState(false);
 
-  // Check if the image is portrait-oriented
+  // Check if the image is portrait-oriented and handle GitHub Pages paths
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Use a safer approach without direct Image constructor
+      // First, ensure we have the correct path for GitHub Pages
+      let currentPath = item.image;
+      
+      // Fix path for GitHub Pages if needed
+      if (isStaticExport() && 
+          !currentPath.includes('/Barelands/') && 
+          currentPath.startsWith('/')) {
+        currentPath = `/Barelands${currentPath}`;
+        setImagePath(currentPath);
+      } else {
+        setImagePath(currentPath);
+      }
+      
+      // Check orientation
       const checkImageOrientation = () => {
         const img = document.createElement('img');
         img.onload = () => {
           setIsPortrait(img.height > img.width);
+          setImageError(false);
         };
         img.onerror = () => {
-          setImageError(true);
+          // If we're on GitHub Pages and haven't tried the fallback path
+          if (isStaticExport() && 
+              !attemptedFallback && 
+              !currentPath.includes('/Barelands/') && 
+              currentPath.startsWith('/')) {
+            
+            setAttemptedFallback(true);
+            const fallbackPath = `/Barelands${currentPath}`;
+            console.log(`Trying fallback path: ${fallbackPath}`);
+            setImagePath(fallbackPath);
+          } else {
+            setImageError(true);
+          }
         };
-        img.src = item.image;
+        img.src = currentPath;
       };
       
       checkImageOrientation();
     }
-  }, [item.image]);
+  }, [item.image, attemptedFallback]);
 
   // Auto-open dialog if this item matches the selected photo ID
   useEffect(() => {
@@ -309,7 +357,7 @@ function PhotoItem({ item, selectedPhotoId }: { item: Photo, selectedPhotoId: st
             {/* Use auto aspect ratio to adapt to image orientation */}
             <div className={`${isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'} w-full relative`}>
               <Image
-                src={item.image}
+                src={imagePath}
                 alt={item.title}
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -330,7 +378,7 @@ function PhotoItem({ item, selectedPhotoId }: { item: Photo, selectedPhotoId: st
             <div className={`grid ${isPortrait ? 'md:grid-cols-[40%_60%]' : 'md:grid-cols-[60%_40%]'} gap-6`}>
               <div className={`relative ${isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'} w-full`}>
                 <Image
-                  src={item.image}
+                  src={imagePath}
                   alt={item.title}
                   fill
                   className="object-cover rounded-md"
@@ -385,7 +433,7 @@ function PhotoItem({ item, selectedPhotoId }: { item: Photo, selectedPhotoId: st
             }}
           >
             <Image
-              src={item.image}
+              src={imagePath}
               alt={item.title}
               fill
               className={`${isPortrait ? 'object-contain' : 'object-contain'}`}
