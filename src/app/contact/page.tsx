@@ -25,8 +25,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Google Apps Script Web App URL
-const FORM_ENDPOINT = "https://script.google.com/macros/s/AKfycbwpcrTARCyQuBUmodSCjrM_pvEBYMfNs-g38UaZlDAOkfWMb2p_S6elaC6uNG_DpXv-Nw/exec";
+// Google Forms endpoint - more reliable than FormSpree
+const FORM_ENDPOINT = "https://docs.google.com/forms/d/e/1FAIpQLSemKKp5Z4TT7UXB9UoH0Z4TMCOiYvmg5HjyJtqf8IrzpVrJhA/formResponse";
 
 // Field mappings for Google Forms
 const FIELD_MAPPINGS = {
