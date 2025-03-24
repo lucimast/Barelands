@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
 import { photos, photoCategories, type Photo } from "@/lib/data";
+import { trackEvent } from "@/lib/analytics";
 import {
   Form,
   FormControl,
@@ -22,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FiHome } from "react-icons/fi";
+import { FiHome, FiSend } from "react-icons/fi";
 
 // Form validation schema
 const formSchema = z.object({
@@ -34,6 +35,9 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// Formspree endpoint for print inquiries
+const FORM_ENDPOINT = "https://formspree.io/f/xgvaynle";
 
 export default function BuyPrintPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
@@ -108,23 +112,42 @@ export default function BuyPrintPage() {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     
-    // Simulate API call
     try {
-      // In a real implementation, this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast.success("Your inquiry has been sent successfully! We'll get back to you soon.");
-      form.reset();
-      setSelectedPhoto(null);
-      
-      // Switch back to gallery tab
-      setActiveTab("gallery");
-      if (galleryTabRef.current) {
-        galleryTabRef.current.click();
+      const response = await fetch(FORM_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...data,
+          photoTitle: selectedPhoto?.title || "",
+          photoLocation: selectedPhoto?.location || "",
+        }),
+      });
+
+      if (response.ok) {
+        // Track the form submission
+        trackEvent('print_inquiry_submit', {
+          photoTitle: selectedPhoto?.title || "",
+          photoLocation: selectedPhoto?.location || ""
+        });
+        
+        toast.success("Your inquiry has been sent successfully! We'll get back to you soon.");
+        form.reset();
+        setSelectedPhoto(null);
+        setSubmissionSuccess(true);
+        
+        // Switch back to gallery tab
+        setActiveTab("gallery");
+        if (galleryTabRef.current) {
+          galleryTabRef.current.click();
+        }
+      } else {
+        throw new Error("Failed to send your inquiry");
       }
     } catch (error) {
-      toast.error("Failed to send your inquiry. Please try again later.");
       console.error("Error submitting form:", error);
+      toast.error("Failed to send your inquiry. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }
@@ -288,107 +311,87 @@ export default function BuyPrintPage() {
               )}
             </TabsContent>
 
-            <TabsContent value="inquiry">
-              {selectedPhoto && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="space-y-6"
-                >
-                  <div className="p-6 bg-zinc-900 rounded-lg border border-zinc-800">
-                    <h3 className="text-xl font-medium mb-4">
-                      Inquiry for "{selectedPhoto.title}"
-                    </h3>
-                    <Form {...form}>
-                      <form
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-6"
+            <TabsContent value="inquiry" className="space-y-6">
+              {submissionSuccess ? (
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-4">
+                    <FiSend className="w-8 h-8 text-green-500" />
+                  </div>
+                  <h3 className="text-2xl font-medium mb-2">Inquiry Sent!</h3>
+                  <p className="text-zinc-300 mb-6">
+                    Thank you for your interest in purchasing a print. We'll get back to you with details about sizes, pricing, and shipping options.
+                  </p>
+                  <Button onClick={() => setSubmissionSuccess(false)}>Send Another Inquiry</Button>
+                </div>
+              ) : (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Your Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="John Doe"
+                              {...field}
+                              className="bg-zinc-800 border-zinc-700"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="johndoe@example.com"
+                              {...field}
+                              className="bg-zinc-800 border-zinc-700"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Your Message</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              rows={5}
+                              {...field}
+                              className="bg-zinc-800 border-zinc-700"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="space-x-4">
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Sending..." : "Send Inquiry"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={switchToGalleryTab}
                       >
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Your Name</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="John Doe"
-                                  {...field}
-                                  className="bg-zinc-800 border-zinc-700"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email Address</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="email"
-                                  placeholder="johndoe@example.com"
-                                  {...field}
-                                  className="bg-zinc-800 border-zinc-700"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="message"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Your Message</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  rows={5}
-                                  {...field}
-                                  className="bg-zinc-800 border-zinc-700"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <div className="space-x-4">
-                          <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? "Sending..." : "Send Inquiry"}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={switchToGalleryTab}
-                          >
-                            Back to Gallery
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </div>
-                  <div className="p-6 bg-zinc-900 rounded-lg border border-zinc-800 mt-6">
-                    <h3 className="text-xl font-medium mb-4">What Happens Next?</h3>
-                    <ol className="space-y-3 text-zinc-300">
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-zinc-800 text-sm">1</span>
-                        <p>We'll review your inquiry and respond within 24-48 hours.</p>
-                      </li>
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-zinc-800 text-sm">2</span>
-                        <p>We'll provide detailed pricing options based on your preferences.</p>
-                      </li>
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-zinc-800 text-sm">3</span>
-                        <p>Once you confirm, we'll prepare and ship your print with care.</p>
-                      </li>
-                    </ol>
-                  </div>
-                </motion.div>
+                        Back to Gallery
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
               )}
             </TabsContent>
           </Tabs>
