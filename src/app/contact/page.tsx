@@ -3,9 +3,86 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { FiHome } from "react-icons/fi";
+import { FiHome, FiMail, FiSend, FiUser, FiMessageSquare } from "react-icons/fi";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+// Form validation schema
+const formSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  subject: z.string().min(2, "Subject must be at least 2 characters"),
+  message: z.string().min(10, "Message must be at least 10 characters"),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+// Google Forms endpoint and field mappings
+const FORM_ENDPOINT = "https://docs.google.com/forms/d/e/1FAIpQLSeS4ZPtstdpFcdDBeZfbcUJpTSnr8Ws7XY9cOpY5bg0JCnXjA/formResponse";
+const FIELD_MAPPINGS = {
+  name: "entry.2005620554",
+  email: "entry.1045781291",
+  subject: "entry.1245014706",
+  message: "entry.1194911538"
+};
 
 export default function ContactPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  // Initialize the form
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+    },
+  });
+
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    
+    try {
+      // Create form data for Google Forms
+      const formData = new FormData();
+      formData.append(FIELD_MAPPINGS.name, data.name);
+      formData.append(FIELD_MAPPINGS.email, data.email);
+      formData.append(FIELD_MAPPINGS.subject, data.subject);
+      formData.append(FIELD_MAPPINGS.message, data.message);
+
+      // Submit to Google Forms
+      const response = await fetch(FORM_ENDPOINT, {
+        method: "POST",
+        body: formData,
+        mode: "no-cors", // Required for Google Forms
+      });
+
+      // Track the form submission
+      trackEvent('contact_form_submit', {
+        subject: data.subject
+      });
+
+      // Show success message
+      setSuccess(true);
+      form.reset();
+      toast.success("Message sent successfully!");
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <main className="min-h-screen pt-24 pb-16">
       <div className="container mx-auto px-4">
@@ -38,18 +115,119 @@ export default function ContactPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="bg-zinc-900 rounded-lg border border-zinc-800 p-8"
           >
-            <iframe
-              src="https://docs.google.com/forms/d/e/1FAIpQLSeS4ZPtstdpFcdDBeZfbcUJpTSnr8Ws7XY9cOpY5bg0JCnXjA/viewform?embedded=true"
-              width="100%"
-              height="800px"
-              frameBorder="0"
-              marginHeight={0}
-              marginWidth={0}
-              className="w-full"
-              title="Contact Form"
-            >
-              Loading…
-            </iframe>
+            {success ? (
+              <div className="text-center py-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-4">
+                  <FiSend className="w-8 h-8 text-green-500" />
+                </div>
+                <h3 className="text-2xl font-medium mb-2">Message Sent!</h3>
+                <p className="text-zinc-300 mb-6">
+                  Thank you for reaching out. I'll respond to your message as soon as possible.
+                </p>
+                <Button onClick={() => setSuccess(false)}>Send Another Message</Button>
+              </div>
+            ) : (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Your Name</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <FiUser className="absolute left-3 top-3 text-zinc-500" />
+                              <Input
+                                placeholder="John Doe"
+                                className="pl-10 bg-zinc-800 border-zinc-700"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <FiMail className="absolute left-3 top-3 text-zinc-500" />
+                              <Input
+                                type="email"
+                                placeholder="johndoe@example.com"
+                                className="pl-10 bg-zinc-800 border-zinc-700"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="What is your message about?"
+                            className="bg-zinc-800 border-zinc-700"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your Message</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <FiMessageSquare className="absolute left-3 top-3 text-zinc-500" />
+                            <Textarea
+                              rows={6}
+                              placeholder="Please provide details about your inquiry..."
+                              className="pl-10 bg-zinc-800 border-zinc-700"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="submit" 
+                    className="w-full md:w-auto"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="animate-pulse">Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FiSend className="mr-2" /> Send Message
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            )}
           </motion.div>
         </div>
       </div>
