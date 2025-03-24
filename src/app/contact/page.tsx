@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { FiHome, FiMail, FiSend, FiUser, FiMessageSquare } from "react-icons/fi";
@@ -36,6 +36,8 @@ const FIELD_MAPPINGS = {
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -48,39 +50,25 @@ export default function ContactPage() {
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = (data: FormValues) => {
+    // If validation passes, we'll let the form submit naturally to the iframe
     setIsSubmitting(true);
     
-    try {
-      // Create form data for Google Forms
-      const formData = new FormData();
-      formData.append(FIELD_MAPPINGS.name, data.name);
-      formData.append(FIELD_MAPPINGS.email, data.email);
-      formData.append(FIELD_MAPPINGS.subject, data.subject);
-      formData.append(FIELD_MAPPINGS.message, data.message);
-
-      // Submit to Google Forms
-      const response = await fetch(FORM_ENDPOINT, {
-        method: "POST",
-        body: formData,
-        mode: "no-cors", // Required for Google Forms
-      });
-
-      // Track the form submission
-      trackEvent('contact_form_submit', {
-        subject: data.subject
-      });
-
-      // Show success message
-      setSuccess(true);
-      form.reset();
-      toast.success("Message sent successfully!");
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      toast.error("Failed to send message. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    // Track the form submission
+    trackEvent('contact_form_submit', {
+      subject: data.subject
+    });
+    
+    // Show toast
+    toast.success("Sending your message...");
+    
+    // Submit the form to the iframe
+    if (formRef.current) {
+      formRef.current.submit();
     }
+    
+    // We'll show the success state after the iframe loads
+    // This is handled by the iframe's onLoad handler
   };
 
   return (
@@ -115,6 +103,23 @@ export default function ContactPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="bg-zinc-900 rounded-lg border border-zinc-800 p-8"
           >
+            {/* Hidden iframe to receive the form submission response */}
+            <iframe 
+              ref={iframeRef}
+              name="hidden_iframe" 
+              id="hidden_iframe" 
+              style={{ display: 'none' }} 
+              onLoad={() => {
+                // Only trigger on actual form submission, not the initial load
+                if (isSubmitting) {
+                  setIsSubmitting(false);
+                  setSuccess(true);
+                  form.reset();
+                  toast.success("Message sent successfully!");
+                }
+              }}
+            />
+            
             {success ? (
               <div className="text-center py-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-4">
@@ -128,7 +133,14 @@ export default function ContactPage() {
               </div>
             ) : (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form 
+                  ref={formRef}
+                  method="POST" 
+                  action={FORM_ENDPOINT} 
+                  target="hidden_iframe"
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <FormField
                       control={form.control}
@@ -140,9 +152,13 @@ export default function ContactPage() {
                             <div className="relative">
                               <FiUser className="absolute left-3 top-3 text-zinc-500" />
                               <Input
+                                name={FIELD_MAPPINGS.name}
                                 placeholder="John Doe"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
-                                {...field}
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                ref={field.ref}
                               />
                             </div>
                           </FormControl>
@@ -160,10 +176,14 @@ export default function ContactPage() {
                             <div className="relative">
                               <FiMail className="absolute left-3 top-3 text-zinc-500" />
                               <Input
+                                name={FIELD_MAPPINGS.email}
                                 type="email"
                                 placeholder="johndoe@example.com"
                                 className="pl-10 bg-zinc-800 border-zinc-700"
-                                {...field}
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                ref={field.ref}
                               />
                             </div>
                           </FormControl>
@@ -180,9 +200,13 @@ export default function ContactPage() {
                         <FormLabel>Subject</FormLabel>
                         <FormControl>
                           <Input
+                            name={FIELD_MAPPINGS.subject}
                             placeholder="What is your message about?"
                             className="bg-zinc-800 border-zinc-700"
-                            {...field}
+                            value={field.value}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            ref={field.ref}
                           />
                         </FormControl>
                         <FormMessage />
@@ -199,10 +223,14 @@ export default function ContactPage() {
                           <div className="relative">
                             <FiMessageSquare className="absolute left-3 top-3 text-zinc-500" />
                             <Textarea
+                              name={FIELD_MAPPINGS.message}
                               rows={6}
                               placeholder="Please provide details about your inquiry..."
                               className="pl-10 bg-zinc-800 border-zinc-700"
-                              {...field}
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              ref={field.ref}
                             />
                           </div>
                         </FormControl>
