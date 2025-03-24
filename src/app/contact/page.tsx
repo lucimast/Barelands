@@ -26,14 +26,14 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 // Google Forms endpoint - more reliable than FormSpree
-const FORM_ENDPOINT = "https://docs.google.com/forms/d/e/1FAIpQLSemKKp5Z4TT7UXB9UoH0Z4TMCOiYvmg5HjyJtqf8IrzpVrJhA/formResponse";
+const FORM_ENDPOINT = "https://docs.google.com/forms/d/e/1FAIpQLSeS4ZPtstdpFcdDBeZfbcUJpTSnr8Ws7XY9cOpY5bg0JCnXjA/formResponse";
 
 // Field mappings for Google Forms
 const FIELD_MAPPINGS = {
-  name: "entry.1262687114",
-  email: "entry.1333325337", 
-  subject: "entry.1445398066",
-  message: "entry.493868231"
+  name: "entry.2005620554",
+  email: "entry.1045781291",
+  subject: "entry.1245014706",
+  message: "entry.1194911538"
 };
 
 export default function ContactPage() {
