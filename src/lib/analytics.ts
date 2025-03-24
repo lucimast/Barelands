@@ -12,7 +12,8 @@ export type AnalyticsEventName =
   | 'contact_form_submit'
   | 'admin_login'
   | 'photo_upload'
-  | 'photo_delete';
+  | 'photo_delete'
+  | 'print_inquiry_submit';
 
 // Define the type based on what Vercel Analytics accepts
 type AllowedValueTypes = string | number | boolean | null;
