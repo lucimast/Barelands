@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 
+// Add static export configuration
+export const dynamic = 'force-static';
+
 export async function POST(request: NextRequest) {
   try {
     const { path } = await request.json();
