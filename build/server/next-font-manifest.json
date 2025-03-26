@@ -1,9 +1,21 @@
 {
   "app": {
-    "[project]/src/app/_not-found/page": [
+    "[project]/src/app/admin/dashboard/photos/page": [
+      "static/media/Geist_Variable-s.p.781b491f.woff2"
+    ],
+    "[project]/src/app/admin/dashboard/settings/page": [
+      "static/media/Geist_Variable-s.p.781b491f.woff2"
+    ],
+    "[project]/src/app/admin/dashboard/users/page": [
+      "static/media/Geist_Variable-s.p.781b491f.woff2"
+    ],
+    "[project]/src/app/admin/page": [
       "static/media/Geist_Variable-s.p.781b491f.woff2"
     ],
     "[project]/src/app/page": [
+      "static/media/Geist_Variable-s.p.781b491f.woff2"
+    ],
+    "[project]/src/app/portfolio/page": [
       "static/media/Geist_Variable-s.p.781b491f.woff2"
     ]
   },

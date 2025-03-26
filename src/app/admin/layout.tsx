@@ -9,8 +9,8 @@ import { signOut } from "next-auth/react";
 
 const adminNavItems = [
   { name: "Dashboard", path: "/admin/dashboard" },
-  { name: "Photos", path: "/admin/photos" },
-  { name: "Analytics", path: "/admin/analytics" },
+  { name: "Photos", path: "/admin/dashboard/photos" },
+  { name: "Analytics", path: "/admin/dashboard/analytics" },
 ];
 
 export default function AdminLayout({
@@ -25,8 +25,8 @@ export default function AdminLayout({
 
   // Redirect if not logged in and not on login page
   useEffect(() => {
-    if (status === "unauthenticated" && pathname !== "/admin") {
-      router.push("/admin");
+    if (status === "unauthenticated" && pathname !== "/admin/login") {
+      router.push("/admin/login");
     }
   }, [status, pathname, router]);
 
@@ -41,8 +41,8 @@ export default function AdminLayout({
     }
   }, [pathname]);
 
-  // Don't apply layout to login page
-  if (pathname === "/admin") {
+  // Don't apply layout to login page or main admin page
+  if (pathname === "/admin/login" || pathname === "/admin") {
     return <>{children}</>;
   }
 
@@ -66,7 +66,7 @@ export default function AdminLayout({
         <div className="container mx-auto flex flex-col lg:flex-row items-center justify-between py-4 px-4">
           <div className="flex items-center justify-between w-full lg:w-auto mb-4 lg:mb-0">
             <div className="flex items-center gap-2">
-              <Link href="/">
+              <Link href="/admin">
                 <h1 className="text-xl font-medium text-white">
                   Barelands
                   <span className="text-xs text-zinc-400 font-normal block">Admin Panel</span>

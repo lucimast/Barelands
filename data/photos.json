@@ -16,7 +16,7 @@
     "image": "/uploads/0c699b59-09d5-498b-96b1-fee1d146d1a8.jpg",
     "description": "Beautiful landscape photograph of Nara Lanterns",
     "location": "Japan",
-    "featured": true,
+    "featured": false,
     "dateAdded": "2025-03-20T09:56:24.784Z"
   },
   {
@@ -26,7 +26,7 @@
     "image": "/uploads/4ac52a48-ce6b-4c41-be3d-8175fac59611.jpg",
     "description": "Beautiful landscape photograph of the Dolomites",
     "location": "Dolomites, Italy",
-    "featured": true,
+    "featured": false,
     "dateAdded": "2025-03-20T09:56:24.784Z"
   },
   {
@@ -46,7 +46,7 @@
     "image": "/uploads/ac1d9140-5825-440b-8a0c-221d94a247fa.jpg",
     "description": "A beautiful sunset on the Greek coast",
     "location": "Kas beach, Ikaria, Greece",
-    "featured": true,
+    "featured": false,
     "dateAdded": "2025-03-20T09:56:24.784Z"
   },
   {
