@@ -19,7 +19,9 @@ const nextConfig = {
     NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
     NEXT_PUBLIC_CLOUDINARY_PRESET_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_NAME,
   },
-  output: 'export', // Enable static site generation for GitHub Pages deployment
+  
+  // Only enable static export in production
+  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
   
   // Disable ESLint during production build since we're making a static site
   eslint: {

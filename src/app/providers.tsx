@@ -6,7 +6,7 @@ import { Toaster } from "sonner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
+    <SessionProvider refetchInterval={0} refetchOnWindowFocus={false}>
       <ThemeProvider attribute="class" defaultTheme="dark">
         <Toaster position="top-right" theme="dark" />
         {children}
