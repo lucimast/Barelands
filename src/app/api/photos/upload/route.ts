@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { photos as inMemoryPhotos, Photo } from '@/lib/data';
 import fs from 'fs';
 import path from 'path';
@@ -56,12 +54,6 @@ async function savePhotoData(photos: Photo[]): Promise<boolean> {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-    }
-    
     // Parse the request body
     const newPhoto = await request.json();
     

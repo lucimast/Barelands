@@ -1,22 +1,33 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { redirect } from "next/navigation";
+// Temporarily disabled NextAuth
+// import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+// import { GetServerSidePropsContext, NextApiRequest, NextApiResponse } from "next";
+// import { getServerSession } from "next-auth";
 
-export async function getSession() {
-  return await getServerSession(authOptions);
+// Define a simplified auth check function
+export const isUserAuthenticated = async (): Promise<boolean> => {
+  // For now, return true to bypass authentication
+  return true;
 }
 
-export async function getCurrentUser() {
-  const session = await getSession();
-  return session?.user;
+// Define a minimal User type
+export type User = {
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
 }
 
-export async function requireAuth() {
-  const user = await getCurrentUser();
-  
-  if (!user) {
-    redirect("/admin");
-  }
-  
-  return user;
+// Provide a dummy getCurrentUser function
+export const getCurrentUser = async (): Promise<User | null> => {
+  // Return a dummy admin user for now
+  return {
+    name: "Admin User",
+    email: "admin@example.com",
+    role: "admin"
+  };
+}
+
+// Provide a simplified function to check if user is admin
+export const isUserAdmin = async (): Promise<boolean> => {
+  // Always return true to allow admin actions
+  return true;
 } 
