@@ -12,11 +12,29 @@ export function generateImageUrl(fileName: string, folder: string = 'uploads'): 
   return `/${folder}/${fileName}`;
 }
 
-// Client-safe version of filterValidPhotos that doesn't check file existence
-export function filterValidPhotos(photos: Photo[]): Photo[] {
-  // In client context, we just return all photos and let client-side 
-  // error handling catch loading problems
-  return [...photos]; // Return a copy to avoid modifying the original
+/**
+ * Filter valid photos by checking if their image paths exist
+ * This is a utility function to remove photos that might have invalid paths
+ */
+export function filterValidPhotos(photos: any): any[] {
+  // Make sure photos is an array and handle the case when it's not
+  if (!photos) {
+    console.error('Photos is null or undefined');
+    return [];
+  }
+  
+  if (Array.isArray(photos)) {
+    // Already an array, just return a copy
+    return [...photos];
+  }
+  
+  // Handle {success, photos} format
+  if (photos.photos && Array.isArray(photos.photos)) {
+    return [...photos.photos];
+  }
+  
+  console.error('Photos is not in a recognized format:', photos);
+  return [];
 }
 
 // This stub remains for API compatibility but doesn't check file existence

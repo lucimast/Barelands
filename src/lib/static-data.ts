@@ -115,6 +115,12 @@ export function fixImagePathsForGitHubPages(photos: Photo[]): Photo[] {
  * Detects if we're in a static export environment
  */
 export function isStaticExport(): boolean {
+  // In development mode, always return false to use the API
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Running in development mode, using API');
+    return false;
+  }
+  
   // In client-side code, we check if window exists and if we're on GitHub Pages
   if (typeof window !== 'undefined') {
     // Check if we're on GitHub Pages (hostname includes github.io or our custom domain)

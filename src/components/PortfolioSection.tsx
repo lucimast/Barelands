@@ -107,7 +107,18 @@ export default function PortfolioSection() {
             }
             
             const data = await response.json();
-            validPhotos = filterValidPhotos(data);
+            
+            // Handle both direct array response and object with photos property
+            if (Array.isArray(data)) {
+              console.log("API returned a direct array");
+              validPhotos = filterValidPhotos(data);
+            } else if (data && data.success === true && Array.isArray(data.photos)) {
+              console.log("API returned an object with photos property");
+              validPhotos = filterValidPhotos(data.photos);
+            } else {
+              console.error("API returned invalid data format:", data);
+              throw new Error("API returned invalid data format");
+            }
           } catch (apiError) {
             console.error('API fetch failed, falling back to static data:', apiError);
             // Fallback to static data even in development if API fails

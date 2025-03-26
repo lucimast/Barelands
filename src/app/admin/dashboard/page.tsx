@@ -2,6 +2,7 @@
 
 import { FiImage, FiSettings, FiUsers, FiBarChart2 } from 'react-icons/fi';
 import Link from 'next/link';
+import { FiCommand, FiEdit3, FiBriefcase, FiCheckCircle, FiMessageCircle } from 'react-icons/fi';
 
 export default function DashboardPage() {
   return (
@@ -62,6 +63,20 @@ export default function DashboardPage() {
               <div>
                 <h2 className="text-xl font-semibold text-white">Analytics</h2>
                 <p className="text-zinc-400">View site analytics</p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Debug Card */}
+          <Link 
+            href="/admin/dashboard/debug"
+            className="block p-6 bg-zinc-800 rounded-lg shadow-lg hover:bg-zinc-700 transition-colors"
+          >
+            <div className="flex items-center">
+              <FiCheckCircle className="h-8 w-8 text-green-500 mr-4" />
+              <div>
+                <h2 className="text-xl font-semibold text-white">Debug</h2>
+                <p className="text-zinc-400">Check data files and system status</p>
               </div>
             </div>
           </Link>

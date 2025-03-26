@@ -15,11 +15,25 @@ function generateImageUrl(fileName, folder = 'uploads') {
     return `/${folder}/${fileName}`;
 }
 function filterValidPhotos(photos) {
-    // In client context, we just return all photos and let client-side 
-    // error handling catch loading problems
-    return [
-        ...photos
-    ]; // Return a copy to avoid modifying the original
+    // Make sure photos is an array and handle the case when it's not
+    if (!photos) {
+        console.error('Photos is null or undefined');
+        return [];
+    }
+    if (Array.isArray(photos)) {
+        // Already an array, just return a copy
+        return [
+            ...photos
+        ];
+    }
+    // Handle {success, photos} format
+    if (photos.photos && Array.isArray(photos.photos)) {
+        return [
+            ...photos.photos
+        ];
+    }
+    console.error('Photos is not in a recognized format:', photos);
+    return [];
 }
 function photoImageExists(photo) {
     // In client context, we just assume photos exist and let
@@ -206,12 +220,12 @@ function fixImagePathsForGitHubPages(photos) {
     const fixedPhotos = undefined;
 }
 function isStaticExport() {
-    // In client-side code, we check if window exists and if we're on GitHub Pages
-    if ("TURBOPACK compile-time falsy", 0) {
-        "TURBOPACK unreachable";
+    // In development mode, always return false to use the API
+    if ("TURBOPACK compile-time truthy", 1) {
+        console.log('Running in development mode, using API');
+        return false;
     }
-    // Server-side: If we're statically exporting, we'll default to true
-    return true;
+    "TURBOPACK unreachable";
 }
 }}),
 "[project]/src/components/HeroSection.tsx [app-ssr] (ecmascript)": ((__turbopack_context__) => {
@@ -1646,7 +1660,17 @@ function PortfolioSection() {
                             throw new Error(`API responded with status: ${response.status}`);
                         }
                         const data = await response.json();
-                        validPhotos = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$storage$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["filterValidPhotos"])(data);
+                        // Handle both direct array response and object with photos property
+                        if (Array.isArray(data)) {
+                            console.log("API returned a direct array");
+                            validPhotos = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$storage$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["filterValidPhotos"])(data);
+                        } else if (data && data.success === true && Array.isArray(data.photos)) {
+                            console.log("API returned an object with photos property");
+                            validPhotos = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$storage$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["filterValidPhotos"])(data.photos);
+                        } else {
+                            console.error("API returned invalid data format:", data);
+                            throw new Error("API returned invalid data format");
+                        }
                     } catch (apiError) {
                         console.error('API fetch failed, falling back to static data:', apiError);
                         // Fallback to static data even in development if API fails
@@ -1750,14 +1774,14 @@ function PortfolioSection() {
                             children: isHomepage ? "A selection of my works" : "Portfolio"
                         }, void 0, false, {
                             fileName: "[project]/src/components/PortfolioSection.tsx",
-                            lineNumber: 207,
+                            lineNumber: 218,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "w-20 h-1 bg-zinc-400 mx-auto mb-6"
                         }, void 0, false, {
                             fileName: "[project]/src/components/PortfolioSection.tsx",
-                            lineNumber: 208,
+                            lineNumber: 219,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1765,13 +1789,13 @@ function PortfolioSection() {
                             children: "A collection of my finest landscape photographs from around the world, each capturing a unique moment in time"
                         }, void 0, false, {
                             fileName: "[project]/src/components/PortfolioSection.tsx",
-                            lineNumber: 209,
+                            lineNumber: 220,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/PortfolioSection.tsx",
-                    lineNumber: 200,
+                    lineNumber: 211,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1782,12 +1806,12 @@ function PortfolioSection() {
                             children: category
                         }, category, false, {
                             fileName: "[project]/src/components/PortfolioSection.tsx",
-                            lineNumber: 217,
+                            lineNumber: 228,
                             columnNumber: 13
                         }, this))
                 }, void 0, false, {
                     fileName: "[project]/src/components/PortfolioSection.tsx",
-                    lineNumber: 215,
+                    lineNumber: 226,
                     columnNumber: 9
                 }, this),
                 isLoading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1797,7 +1821,7 @@ function PortfolioSection() {
                             className: "w-8 h-8 border-4 border-zinc-500 border-t-white rounded-full animate-spin mx-auto mb-4"
                         }, void 0, false, {
                             fileName: "[project]/src/components/PortfolioSection.tsx",
-                            lineNumber: 234,
+                            lineNumber: 245,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1805,13 +1829,13 @@ function PortfolioSection() {
                             children: "Loading photos..."
                         }, void 0, false, {
                             fileName: "[project]/src/components/PortfolioSection.tsx",
-                            lineNumber: 235,
+                            lineNumber: 246,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/PortfolioSection.tsx",
-                    lineNumber: 233,
+                    lineNumber: 244,
                     columnNumber: 11
                 }, this),
                 error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1822,7 +1846,7 @@ function PortfolioSection() {
                             children: error
                         }, void 0, false, {
                             fileName: "[project]/src/components/PortfolioSection.tsx",
-                            lineNumber: 242,
+                            lineNumber: 253,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1831,13 +1855,13 @@ function PortfolioSection() {
                             children: "Try Again"
                         }, void 0, false, {
                             fileName: "[project]/src/components/PortfolioSection.tsx",
-                            lineNumber: 243,
+                            lineNumber: 254,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/PortfolioSection.tsx",
-                    lineNumber: 241,
+                    lineNumber: 252,
                     columnNumber: 11
                 }, this),
                 !isLoading && !error && isMounted && filteredItems.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$masonry$2d$css$2f$dist$2f$react$2d$masonry$2d$css$2e$module$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -1862,17 +1886,17 @@ function PortfolioSection() {
                                 selectedPhotoId: selectedPhotoId
                             }, void 0, false, {
                                 fileName: "[project]/src/components/PortfolioSection.tsx",
-                                lineNumber: 267,
+                                lineNumber: 278,
                                 columnNumber: 17
                             }, this)
                         }, item.id, false, {
                             fileName: "[project]/src/components/PortfolioSection.tsx",
-                            lineNumber: 260,
+                            lineNumber: 271,
                             columnNumber: 15
                         }, this))
                 }, void 0, false, {
                     fileName: "[project]/src/components/PortfolioSection.tsx",
-                    lineNumber: 254,
+                    lineNumber: 265,
                     columnNumber: 11
                 }, this),
                 !isLoading && !error && isMounted && filteredItems.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1882,23 +1906,23 @@ function PortfolioSection() {
                         children: "No photos found in this category."
                     }, void 0, false, {
                         fileName: "[project]/src/components/PortfolioSection.tsx",
-                        lineNumber: 276,
+                        lineNumber: 287,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/PortfolioSection.tsx",
-                    lineNumber: 275,
+                    lineNumber: 286,
                     columnNumber: 11
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/components/PortfolioSection.tsx",
-            lineNumber: 199,
+            lineNumber: 210,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/PortfolioSection.tsx",
-        lineNumber: 198,
+        lineNumber: 209,
         columnNumber: 5
     }, this);
 }

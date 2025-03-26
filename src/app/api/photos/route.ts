@@ -21,55 +21,52 @@ async function loadPhotoData(): Promise<Photo[]> {
   }
 }
 
-// For static export, we need a version that doesn't use request.url
-// We'll return all photos (unfiltered) for static export
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    // Load photos from file
-    let storedPhotos: Photo[] = [];
-    try {
-      storedPhotos = await loadPhotoData();
-    } catch (error) {
-      console.error('Error loading stored photos:', error);
-      // Continue with just in-memory photos if there's an error
+    console.log('API: GET /api/photos request received');
+    
+    // Get query parameters
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get('category');
+    
+    // Load photos from JSON file first
+    let photosData = await loadPhotosData();
+    console.log(`API: Loaded ${photosData.length} photos from JSON file`);
+    
+    // If no photos from JSON, fall back to the static data
+    if (!photosData || photosData.length === 0) {
+      console.log('API: No photos in JSON file, falling back to static data');
+      photosData = photos;
     }
     
-    // Combine photos from both sources, avoiding duplicates by ID
-    const photoMap = new Map<string, Photo>();
+    // Filter photos by category if provided
+    let filteredPhotos = photosData;
+    if (category && category !== 'All') {
+      filteredPhotos = photosData.filter(photo => photo.category === category);
+      console.log(`API: Filtered to ${filteredPhotos.length} photos in category: ${category}`);
+    }
     
-    // Add in-memory photos first
-    photos.forEach(photo => {
-      photoMap.set(photo.id, photo);
-    });
-    
-    // Add stored photos, potentially overriding in-memory ones
-    storedPhotos.forEach(photo => {
-      photoMap.set(photo.id, photo);
-    });
-    
-    // Convert back to array
-    let allPhotos = Array.from(photoMap.values());
-    
-    // Sort by dateAdded, newest first
-    allPhotos.sort((a, b) => 
+    // Sort photos by dateAdded (newest first)
+    filteredPhotos = [...filteredPhotos].sort((a, b) => 
       new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
     );
     
-    return NextResponse.json(allPhotos);
+    console.log(`API: Returning ${filteredPhotos.length} photos`);
+    
+    // Return the photos array directly
+    return NextResponse.json(filteredPhotos);
   } catch (error) {
     console.error('Error fetching photos:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch photos' },
+      [], 
       { status: 500 }
     );
   }
 }
 
-const PHOTOS_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
-
 // Ensure the data directory exists
 const ensureDataDir = () => {
-  const dir = path.dirname(PHOTOS_DATA_PATH);
+  const dir = path.dirname(PHOTO_DATA_PATH);
   if (!fsSync.existsSync(dir)) {
     fsSync.mkdirSync(dir, { recursive: true });
   }
@@ -79,13 +76,30 @@ const ensureDataDir = () => {
 const loadPhotosData = async (): Promise<Photo[]> => {
   try {
     ensureDataDir();
-    if (!fsSync.existsSync(PHOTOS_DATA_PATH)) {
+    
+    if (!fsSync.existsSync(PHOTO_DATA_PATH)) {
+      console.log(`API: Data file not found at ${PHOTO_DATA_PATH}`);
       return [];
     }
-    const data = fsSync.readFileSync(PHOTOS_DATA_PATH, 'utf-8');
-    return JSON.parse(data);
+    
+    const data = fsSync.readFileSync(PHOTO_DATA_PATH, 'utf-8');
+    console.log(`API: Successfully read data file, size: ${data.length} bytes`);
+    
+    if (!data || data.trim() === '') {
+      console.log(`API: Data file is empty`);
+      return [];
+    }
+    
+    try {
+      const parsedData = JSON.parse(data);
+      console.log(`API: Successfully parsed JSON data, found ${parsedData.length} photos`);
+      return parsedData;
+    } catch (parseError) {
+      console.error(`API: Error parsing JSON data:`, parseError);
+      return [];
+    }
   } catch (error) {
-    console.error('Error loading photos data:', error);
+    console.error('API: Error loading photos data:', error);
     return [];
   }
 };
@@ -94,7 +108,7 @@ const loadPhotosData = async (): Promise<Photo[]> => {
 const savePhotosData = async (photos: Photo[]): Promise<void> => {
   try {
     ensureDataDir();
-    fsSync.writeFileSync(PHOTOS_DATA_PATH, JSON.stringify(photos, null, 2));
+    fsSync.writeFileSync(PHOTO_DATA_PATH, JSON.stringify(photos, null, 2));
   } catch (error) {
     console.error('Error saving photos data:', error);
     throw error;
@@ -104,28 +118,80 @@ const savePhotosData = async (photos: Photo[]): Promise<void> => {
 export async function POST(request: Request) {
   try {
     const photo = await request.json();
+    
+    console.log('Received photo data:', photo);
+    
+    // Validate the photo data
+    if (!photo || !photo.id || !photo.image || !photo.title) {
+      console.error('Invalid photo data received:', photo);
+      return NextResponse.json(
+        { error: 'Invalid photo data. Required fields: id, image, title' },
+        { status: 400 }
+      );
+    }
+    
+    // Load existing photos
     const photos = await loadPhotosData();
+    
+    // Add the new photo
     photos.push(photo);
+    
+    // Save all photos
     await savePhotosData(photos);
-    return NextResponse.json(photo);
+    
+    // Return the saved photo with a success status
+    return NextResponse.json(photo, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to add photo' }, { status: 500 });
+    console.error('Error saving photo:', error);
+    return NextResponse.json(
+      { error: 'Failed to save photo', details: String(error) },
+      { status: 500 }
+    );
   }
 }
 
 export async function PUT(request: Request) {
   try {
     const photo = await request.json();
+    
+    console.log('Received photo update:', photo);
+    
+    // Validate the photo data
+    if (!photo || !photo.id) {
+      console.error('Invalid photo data for update:', photo);
+      return NextResponse.json(
+        { error: 'Invalid photo data. Required field: id' },
+        { status: 400 }
+      );
+    }
+    
+    // Load existing photos
     const photos = await loadPhotosData();
+    
+    // Find the photo to update
     const index = photos.findIndex(p => p.id === photo.id);
+    
     if (index !== -1) {
+      // Update the photo
       photos[index] = photo;
+      
+      // Save all photos
       await savePhotosData(photos);
+      
+      // Return the updated photo
       return NextResponse.json(photo);
     }
-    return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
+    
+    return NextResponse.json(
+      { error: 'Photo not found' },
+      { status: 404 }
+    );
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to update photo' }, { status: 500 });
+    console.error('Error updating photo:', error);
+    return NextResponse.json(
+      { error: 'Failed to update photo', details: String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -133,14 +199,39 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const photoId = searchParams.get('id');
+    
+    console.log('Attempting to delete photo with ID:', photoId);
+    
     if (!photoId) {
-      return NextResponse.json({ error: 'Photo ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Photo ID is required' },
+        { status: 400 }
+      );
     }
+    
+    // Load existing photos
     const photos = await loadPhotosData();
+    
+    // Filter out the photo to delete
     const filteredPhotos = photos.filter(p => p.id !== photoId);
+    
+    // Check if any photos were removed
+    if (filteredPhotos.length === photos.length) {
+      return NextResponse.json(
+        { error: 'Photo not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Save the filtered photos
     await savePhotosData(filteredPhotos);
+    
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete photo' }, { status: 500 });
+    console.error('Error deleting photo:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete photo', details: String(error) },
+      { status: 500 }
+    );
   }
 } 

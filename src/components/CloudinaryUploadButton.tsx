@@ -27,7 +27,11 @@ const CloudinaryUploadButton = ({ onUpload, buttonText = 'Upload Photo' }: Cloud
     document.body.appendChild(script);
     
     return () => {
-      document.body.removeChild(script);
+      // Clean up script on unmount if it exists
+      const existingScript = document.querySelector('script[src="https://upload-widget.cloudinary.com/global/all.js"]');
+      if (existingScript && existingScript.parentNode) {
+        existingScript.parentNode.removeChild(existingScript);
+      }
     };
   }, []);
 
@@ -40,10 +44,14 @@ const CloudinaryUploadButton = ({ onUpload, buttonText = 'Upload Photo' }: Cloud
       return;
     }
     
+    // Log cloudinary configuration for debugging
+    console.log('Configuring widget with cloud name:', process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dnafz7ugo');
+    console.log('Configuring widget with upload preset:', 'landscape_photos');
+    
     // Create and open the upload widget
     const widget = window.cloudinary.createUploadWidget(
       {
-        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dnafz7ugo',
         uploadPreset: 'landscape_photos',
         sources: ['local'],
         multiple: false,
@@ -68,17 +76,28 @@ const CloudinaryUploadButton = ({ onUpload, buttonText = 'Upload Photo' }: Cloud
         }
       },
       (error: any, result: any) => {
-        console.log('Upload callback triggered');
+        console.log('Upload callback triggered, event:', result?.event);
+        
         if (error) {
           console.error('Upload error:', error);
           return;
         }
         
-        console.log('Upload result:', result);
         if (result.event === 'success') {
-          console.log('Upload successful:', result.info);
+          console.log('Upload successful, info:', result.info);
+          console.log('  - secure_url:', result.info.secure_url);
+          console.log('  - public_id:', result.info.public_id);
+          console.log('  - format:', result.info.format);
+          console.log('  - version:', result.info.version);
+          
           onUpload(result.info.secure_url);
           widget.close();
+        } else if (result.event === 'queues-end') {
+          console.log('Upload queue ended');
+        } else if (result.event === 'close') {
+          console.log('Widget closed by user');
+        } else if (result.event === 'upload-added') {
+          console.log('File added to upload queue:', result.info?.files?.[0]?.name);
         }
       }
     );
