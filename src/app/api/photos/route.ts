@@ -7,6 +7,11 @@ import * as fsSync from 'fs';
 // Add static export configuration
 export const dynamic = 'force-static';
 
+// Add generateStaticParams for static export
+export function generateStaticParams() {
+  return [];
+}
+
 // Path to stored photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
 

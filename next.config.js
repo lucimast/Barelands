@@ -20,8 +20,8 @@ const nextConfig = {
     NEXT_PUBLIC_CLOUDINARY_PRESET_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_NAME,
   },
   
-  // Only enable static export in production
-  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
+  // Always enable static export (both for dev and production)
+  output: 'export',
   
   // Disable ESLint during production build since we're making a static site
   eslint: {

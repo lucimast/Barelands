@@ -10,6 +10,11 @@ import { revalidatePath } from 'next/cache';
 export const dynamic = 'force-static';
 export const revalidate = false;
 
+// Add generateStaticParams for static export
+export function generateStaticParams() {
+  return [];
+}
+
 // Path to stored photo data
 const PHOTO_DATA_PATH = path.join(process.cwd(), 'data', 'photos.json');
 

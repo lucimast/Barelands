@@ -4,6 +4,11 @@ import { revalidatePath } from 'next/cache';
 // Add static export configuration
 export const dynamic = 'force-static';
 
+// Add generateStaticParams for static export
+export function generateStaticParams() {
+  return [];
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { path } = await request.json();

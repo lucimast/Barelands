@@ -5,6 +5,11 @@ import { JWT } from "next-auth/jwt";
 // Add static export configuration
 export const dynamic = 'force-static';
 
+// Add generateStaticParams for static export
+export function generateStaticParams() {
+  return [];
+}
+
 // Extend the built-in types
 declare module "next-auth" {
   interface Session {

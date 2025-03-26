@@ -5,6 +5,11 @@ import path from 'path';
 // Add static export configuration
 export const dynamic = 'force-static';
 
+// Add generateStaticParams for static export
+export function generateStaticParams() {
+  return [];
+}
+
 export async function GET(req: NextRequest) {
   try {
     const dataPath = path.join(process.cwd(), 'data', 'photos.json');
