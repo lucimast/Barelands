@@ -26,7 +26,11 @@ const CloudinaryUploadButton = ({ onUpload, buttonText = 'Upload Photo' })=>{
         script.async = true;
         document.body.appendChild(script);
         return ()=>{
-            document.body.removeChild(script);
+            // Clean up script on unmount if it exists
+            const existingScript = document.querySelector('script[src="https://upload-widget.cloudinary.com/global/all.js"]');
+            if (existingScript && existingScript.parentNode) {
+                existingScript.parentNode.removeChild(existingScript);
+            }
         };
     }, []);
     const openWidget = ()=>{
@@ -36,9 +40,12 @@ const CloudinaryUploadButton = ({ onUpload, buttonText = 'Upload Photo' })=>{
             console.error('Cloudinary widget script not loaded');
             return;
         }
+        // Log cloudinary configuration for debugging
+        console.log('Configuring widget with cloud name:', ("TURBOPACK compile-time value", "dnafz7ugo") || 'dnafz7ugo');
+        console.log('Configuring widget with upload preset:', 'landscape_photos');
         // Create and open the upload widget
         const widget = window.cloudinary.createUploadWidget({
-            cloudName: ("TURBOPACK compile-time value", "dnafz7ugo"),
+            cloudName: ("TURBOPACK compile-time value", "dnafz7ugo") || 'dnafz7ugo',
             uploadPreset: 'landscape_photos',
             sources: [
                 'local'
@@ -64,16 +71,25 @@ const CloudinaryUploadButton = ({ onUpload, buttonText = 'Upload Photo' })=>{
                 }
             }
         }, (error, result)=>{
-            console.log('Upload callback triggered');
+            console.log('Upload callback triggered, event:', result?.event);
             if (error) {
                 console.error('Upload error:', error);
                 return;
             }
-            console.log('Upload result:', result);
             if (result.event === 'success') {
-                console.log('Upload successful:', result.info);
+                console.log('Upload successful, info:', result.info);
+                console.log('  - secure_url:', result.info.secure_url);
+                console.log('  - public_id:', result.info.public_id);
+                console.log('  - format:', result.info.format);
+                console.log('  - version:', result.info.version);
                 onUpload(result.info.secure_url);
                 widget.close();
+            } else if (result.event === 'queues-end') {
+                console.log('Upload queue ended');
+            } else if (result.event === 'close') {
+                console.log('Widget closed by user');
+            } else if (result.event === 'upload-added') {
+                console.log('File added to upload queue:', result.info?.files?.[0]?.name);
             }
         });
         widget.open();
@@ -86,14 +102,14 @@ const CloudinaryUploadButton = ({ onUpload, buttonText = 'Upload Photo' })=>{
                 className: "-ml-1 mr-2 h-4 w-4"
             }, void 0, false, {
                 fileName: "[project]/src/components/CloudinaryUploadButton.tsx",
-                lineNumber: 94,
+                lineNumber: 113,
                 columnNumber: 7
             }, this),
             buttonText
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/CloudinaryUploadButton.tsx",
-        lineNumber: 90,
+        lineNumber: 109,
         columnNumber: 5
     }, this);
 };
@@ -278,12 +294,12 @@ function fixImagePathsForGitHubPages(photos) {
     const fixedPhotos = undefined;
 }
 function isStaticExport() {
-    // In client-side code, we check if window exists and if we're on GitHub Pages
-    if ("TURBOPACK compile-time falsy", 0) {
-        "TURBOPACK unreachable";
+    // In development mode, always return false to use the API
+    if ("TURBOPACK compile-time truthy", 1) {
+        console.log('Running in development mode, using API');
+        return false;
     }
-    // Server-side: If we're statically exporting, we'll default to true
-    return true;
+    "TURBOPACK unreachable";
 }
 }}),
 "[project]/src/lib/storage.ts [app-ssr] (ecmascript)": ((__turbopack_context__) => {
@@ -301,11 +317,25 @@ function generateImageUrl(fileName, folder = 'uploads') {
     return `/${folder}/${fileName}`;
 }
 function filterValidPhotos(photos) {
-    // In client context, we just return all photos and let client-side 
-    // error handling catch loading problems
-    return [
-        ...photos
-    ]; // Return a copy to avoid modifying the original
+    // Make sure photos is an array and handle the case when it's not
+    if (!photos) {
+        console.error('Photos is null or undefined');
+        return [];
+    }
+    if (Array.isArray(photos)) {
+        // Already an array, just return a copy
+        return [
+            ...photos
+        ];
+    }
+    // Handle {success, photos} format
+    if (photos.photos && Array.isArray(photos.photos)) {
+        return [
+            ...photos.photos
+        ];
+    }
+    console.error('Photos is not in a recognized format:', photos);
+    return [];
 }
 function photoImageExists(photo) {
     // In client context, we just assume photos exist and let
@@ -352,50 +382,80 @@ function PhotosPage() {
     const [editingPhoto, setEditingPhoto] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [newPhoto, setNewPhoto] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        const fetchPhotos = async ()=>{
-            try {
-                setIsLoading(true);
-                let validPhotos = [];
-                // Check if we're in static export mode
-                if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$static$2d$data$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isStaticExport"])()) {
-                    // Use static data instead of API
-                    console.log("Using static photo data");
-                    validPhotos = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$static$2d$data$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getStaticPhotoData"])();
-                } else {
-                    // Use API in development mode
-                    try {
-                        const response = await fetch('/api/photos');
-                        if (!response.ok) {
-                            throw new Error(`API responded with status: ${response.status}`);
-                        }
-                        const data = await response.json();
-                        validPhotos = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$storage$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["filterValidPhotos"])(data);
-                    } catch (apiError) {
-                        console.error('API fetch failed, falling back to static data:', apiError);
-                        // Fallback to static data even in development if API fails
-                        validPhotos = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$static$2d$data$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getStaticPhotoData"])();
+    const fetchPhotos = async ()=>{
+        try {
+            console.log("Starting to fetch photos...");
+            setIsLoading(true);
+            let validPhotos = [];
+            // Check if we're in static export mode
+            if ((0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$static$2d$data$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["isStaticExport"])()) {
+                // Use static data instead of API
+                console.log("Using static photo data");
+                validPhotos = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$static$2d$data$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getStaticPhotoData"])();
+            } else {
+                // Use API in development mode
+                try {
+                    console.log("Fetching photos from API...");
+                    const response = await fetch('/api/photos');
+                    if (!response.ok) {
+                        throw new Error(`API responded with status: ${response.status}`);
                     }
+                    const data = await response.json();
+                    console.log("Received data from API:", data);
+                    // Handle both direct array response and object with photos property
+                    if (Array.isArray(data)) {
+                        console.log("API returned a direct array");
+                        validPhotos = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$storage$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["filterValidPhotos"])(data);
+                    } else if (data && data.success === true && Array.isArray(data.photos)) {
+                        console.log("Using photos from API response object");
+                        validPhotos = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$storage$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["filterValidPhotos"])(data.photos);
+                    } else {
+                        console.error("API returned invalid data format:", data);
+                        throw new Error("API returned invalid data format");
+                    }
+                    console.log("Filtered valid photos:", validPhotos);
+                } catch (apiError) {
+                    console.error('API fetch failed, falling back to static data:', apiError);
+                    // Fallback to static data even in development if API fails
+                    validPhotos = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$static$2d$data$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getStaticPhotoData"])();
                 }
-                if (!validPhotos || validPhotos.length === 0) {
-                    console.error("No photos loaded, throwing error");
-                    throw new Error("No photos could be loaded");
-                }
-                console.log(`Loaded ${validPhotos.length} photos`);
-                setPhotos(validPhotos);
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching photos:', err);
-                setError('Failed to load photos. Please try again.');
-            } finally{
-                setIsLoading(false);
             }
-        };
+            if (!validPhotos || validPhotos.length === 0) {
+                console.error("No photos loaded, throwing error");
+                throw new Error("No photos could be loaded");
+            }
+            console.log(`Loaded ${validPhotos.length} photos`);
+            setPhotos(validPhotos);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching photos:', err);
+            setError('Failed to load photos. Please try again.');
+        } finally{
+            setIsLoading(false);
+        }
+    };
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         fetchPhotos();
     }, []);
     const handleUpload = async (imageUrl)=>{
         try {
             console.log('Starting photo upload process with URL:', imageUrl);
+            // Verify this is a Cloudinary URL
+            if (imageUrl.includes('res.cloudinary.com')) {
+                console.log('✅ Confirmed Cloudinary URL:', imageUrl);
+                // Extract some information from the URL for logging
+                const urlParts = imageUrl.split('/');
+                const filename = urlParts[urlParts.length - 1];
+                console.log('Cloudinary filename:', filename);
+                // Check if image contains upload folder name
+                if (imageUrl.includes('/landscape-photos/')) {
+                    console.log('✅ Image is in correct Cloudinary folder');
+                } else {
+                    console.log('⚠️ Image might not be in the expected Cloudinary folder');
+                }
+            } else {
+                console.warn('⚠️ This does not appear to be a Cloudinary URL:', imageUrl);
+            }
             // Create a new photo object
             const photo = {
                 id: Date.now().toString(),
@@ -425,40 +485,100 @@ function PhotosPage() {
             if (newPhoto) {
                 // Add new photo
                 console.log('Adding new photo...');
-                const response = await fetch('/api/photos', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(editingPhoto)
-                });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to add photo');
+                try {
+                    const response = await fetch('/api/photos', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(editingPhoto)
+                    });
+                    console.log('API response status:', response.status);
+                    // First check if the response is ok
+                    if (!response.ok) {
+                        // Try to parse the error message
+                        let errorMessage = 'Failed to add photo';
+                        try {
+                            const errorData = await response.json();
+                            errorMessage = errorData.error || errorMessage;
+                        } catch (parseError) {
+                            console.error('Could not parse error response:', parseError);
+                        }
+                        throw new Error(errorMessage);
+                    }
+                    // Then try to parse the response
+                    let savedPhoto;
+                    try {
+                        const responseText = await response.text();
+                        console.log('Response text:', responseText);
+                        if (responseText) {
+                            savedPhoto = JSON.parse(responseText);
+                            console.log('Photo saved successfully:', savedPhoto);
+                            setPhotos([
+                                ...photos,
+                                savedPhoto
+                            ]);
+                        } else {
+                            console.error('Empty response received');
+                            throw new Error('Empty response received from server');
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing response:', parseError);
+                        throw new Error('Error parsing server response');
+                    }
+                } catch (apiError) {
+                    console.error('API call error:', apiError);
+                    throw apiError;
                 }
-                const savedPhoto = await response.json();
-                console.log('Photo saved successfully:', savedPhoto);
-                setPhotos([
-                    ...photos,
-                    savedPhoto
-                ]);
+                // Refresh photos from the server to ensure we have the latest data
+                await fetchPhotos();
             } else {
                 // Update existing photo
                 console.log('Updating existing photo...');
-                const response = await fetch('/api/photos', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(editingPhoto)
-                });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to update photo');
+                try {
+                    const response = await fetch('/api/photos', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(editingPhoto)
+                    });
+                    console.log('API response status:', response.status);
+                    // First check if the response is ok
+                    if (!response.ok) {
+                        // Try to parse the error message
+                        let errorMessage = 'Failed to update photo';
+                        try {
+                            const errorData = await response.json();
+                            errorMessage = errorData.error || errorMessage;
+                        } catch (parseError) {
+                            console.error('Could not parse error response:', parseError);
+                        }
+                        throw new Error(errorMessage);
+                    }
+                    // Then try to parse the response
+                    let updatedPhoto;
+                    try {
+                        const responseText = await response.text();
+                        console.log('Response text:', responseText);
+                        if (responseText) {
+                            updatedPhoto = JSON.parse(responseText);
+                            console.log('Photo updated successfully:', updatedPhoto);
+                            setPhotos(photos.map((photo)=>photo.id === updatedPhoto.id ? updatedPhoto : photo));
+                        } else {
+                            console.error('Empty response received');
+                            throw new Error('Empty response received from server');
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing response:', parseError);
+                        throw new Error('Error parsing server response');
+                    }
+                } catch (apiError) {
+                    console.error('API call error:', apiError);
+                    throw apiError;
                 }
-                const updatedPhoto = await response.json();
-                console.log('Photo updated successfully:', updatedPhoto);
-                setPhotos(photos.map((photo)=>photo.id === updatedPhoto.id ? updatedPhoto : photo));
+                // Refresh photos from the server to ensure we have the latest data
+                await fetchPhotos();
             }
             setEditingPhoto(null);
             setNewPhoto(null);
@@ -475,6 +595,8 @@ function PhotosPage() {
                 });
                 if (!response.ok) throw new Error('Failed to delete photo');
                 setPhotos(photos.filter((photo)=>photo.id !== photoId));
+                // Refresh photos from the server to ensure we have the latest data
+                await fetchPhotos();
             } catch (error) {
                 console.error('Error deleting photo:', error);
                 alert('Failed to delete photo. Please try again.');
@@ -499,6 +621,8 @@ function PhotosPage() {
             if (!response.ok) throw new Error('Failed to update photo');
             const savedPhoto = await response.json();
             setPhotos(photos.map((p)=>p.id === photoId ? savedPhoto : p));
+            // Refresh photos from the server to ensure we have the latest data
+            await fetchPhotos();
         } catch (error) {
             console.error('Error toggling featured status:', error);
             alert('Failed to update photo. Please try again.');
@@ -515,21 +639,77 @@ function PhotosPage() {
                         children: "Photos"
                     }, void 0, false, {
                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                        lineNumber: 205,
+                        lineNumber: 315,
                         columnNumber: 9
                     }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$CloudinaryUploadButton$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
-                        onUpload: handleUpload
-                    }, void 0, false, {
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "flex space-x-2",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                onClick: fetchPhotos,
+                                className: "inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$icons$2f$fi$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FiRefreshCw"], {
+                                        className: "-ml-1 mr-2 h-4 w-4"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
+                                        lineNumber: 321,
+                                        columnNumber: 13
+                                    }, this),
+                                    "Refresh"
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
+                                lineNumber: 317,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$CloudinaryUploadButton$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
+                                onUpload: handleUpload
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
+                                lineNumber: 324,
+                                columnNumber: 11
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                        lineNumber: 206,
+                        lineNumber: 316,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                lineNumber: 204,
+                lineNumber: 314,
                 columnNumber: 7
+            }, this),
+            error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative",
+                role: "alert",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
+                        className: "font-bold",
+                        children: "Error!"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
+                        lineNumber: 330,
+                        columnNumber: 11
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                        className: "block sm:inline",
+                        children: [
+                            " ",
+                            error
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
+                        lineNumber: 331,
+                        columnNumber: 11
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
+                lineNumber: 329,
+                columnNumber: 9
             }, this),
             isLoading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "flex items-center justify-center h-64",
@@ -537,12 +717,12 @@ function PhotosPage() {
                     className: "animate-spin h-8 w-8 text-white"
                 }, void 0, false, {
                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                    lineNumber: 211,
+                    lineNumber: 337,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                lineNumber: 210,
+                lineNumber: 336,
                 columnNumber: 9
             }, this) : photos.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "text-center py-12",
@@ -552,7 +732,7 @@ function PhotosPage() {
                         children: "No photos"
                     }, void 0, false, {
                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                        lineNumber: 215,
+                        lineNumber: 341,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -560,7 +740,7 @@ function PhotosPage() {
                         children: "Get started by uploading a new photo."
                     }, void 0, false, {
                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                        lineNumber: 216,
+                        lineNumber: 342,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -569,18 +749,18 @@ function PhotosPage() {
                             onUpload: handleUpload
                         }, void 0, false, {
                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                            lineNumber: 218,
+                            lineNumber: 344,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                        lineNumber: 217,
+                        lineNumber: 343,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                lineNumber: 214,
+                lineNumber: 340,
                 columnNumber: 9
             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
@@ -597,7 +777,7 @@ function PhotosPage() {
                                         className: "object-cover"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                        lineNumber: 226,
+                                        lineNumber: 352,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -612,12 +792,12 @@ function PhotosPage() {
                                                         className: "h-5 w-5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                                        lineNumber: 238,
+                                                        lineNumber: 364,
                                                         columnNumber: 23
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                                    lineNumber: 234,
+                                                    lineNumber: 360,
                                                     columnNumber: 21
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -627,29 +807,29 @@ function PhotosPage() {
                                                         className: "h-5 w-5"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                                        lineNumber: 244,
+                                                        lineNumber: 370,
                                                         columnNumber: 23
                                                     }, this)
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                                    lineNumber: 240,
+                                                    lineNumber: 366,
                                                     columnNumber: 21
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 233,
+                                            lineNumber: 359,
                                             columnNumber: 19
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                        lineNumber: 232,
+                                        lineNumber: 358,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                lineNumber: 225,
+                                lineNumber: 351,
                                 columnNumber: 15
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -660,15 +840,15 @@ function PhotosPage() {
                                         children: photo.title
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                        lineNumber: 250,
+                                        lineNumber: 376,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                        className: "mt-1 text-sm text-zinc-400",
+                                        className: "mt-1 text-sm text-zinc-400 line-clamp-2",
                                         children: photo.description
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                        lineNumber: 251,
+                                        lineNumber: 377,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -679,7 +859,7 @@ function PhotosPage() {
                                                 children: photo.category
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                                lineNumber: 253,
+                                                lineNumber: 379,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -688,30 +868,30 @@ function PhotosPage() {
                                                 children: photo.featured ? 'Featured' : 'Not Featured'
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                                lineNumber: 254,
+                                                lineNumber: 380,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                        lineNumber: 252,
+                                        lineNumber: 378,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                lineNumber: 249,
+                                lineNumber: 375,
                                 columnNumber: 15
                             }, this)
                         ]
                     }, photo.id, true, {
                         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                        lineNumber: 224,
+                        lineNumber: 350,
                         columnNumber: 13
                     }, this))
             }, void 0, false, {
                 fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                lineNumber: 222,
+                lineNumber: 348,
                 columnNumber: 9
             }, this),
             editingPhoto && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -724,7 +904,7 @@ function PhotosPage() {
                             children: newPhoto ? 'Add New Photo' : 'Edit Photo'
                         }, void 0, false, {
                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                            lineNumber: 275,
+                            lineNumber: 401,
                             columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -739,7 +919,7 @@ function PhotosPage() {
                                             children: "Title"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 280,
+                                            lineNumber: 406,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -753,13 +933,13 @@ function PhotosPage() {
                                             className: "mt-1 block w-full rounded-md bg-zinc-700 border-zinc-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 283,
+                                            lineNumber: 409,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                    lineNumber: 279,
+                                    lineNumber: 405,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -770,7 +950,7 @@ function PhotosPage() {
                                             children: "Description"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 292,
+                                            lineNumber: 418,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
@@ -784,13 +964,13 @@ function PhotosPage() {
                                             className: "mt-1 block w-full rounded-md bg-zinc-700 border-zinc-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 295,
+                                            lineNumber: 421,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                    lineNumber: 291,
+                                    lineNumber: 417,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -801,7 +981,7 @@ function PhotosPage() {
                                             children: "Category"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 304,
+                                            lineNumber: 430,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -817,18 +997,18 @@ function PhotosPage() {
                                                     children: category
                                                 }, category, false, {
                                                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                                    lineNumber: 314,
+                                                    lineNumber: 440,
                                                     columnNumber: 21
                                                 }, this))
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 307,
+                                            lineNumber: 433,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                    lineNumber: 303,
+                                    lineNumber: 429,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -839,7 +1019,7 @@ function PhotosPage() {
                                             children: "Location"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 321,
+                                            lineNumber: 447,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -853,13 +1033,13 @@ function PhotosPage() {
                                             className: "mt-1 block w-full rounded-md bg-zinc-700 border-zinc-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 324,
+                                            lineNumber: 450,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                    lineNumber: 320,
+                                    lineNumber: 446,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -868,7 +1048,7 @@ function PhotosPage() {
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                             type: "checkbox",
                                             id: "featured",
-                                            checked: editingPhoto.featured,
+                                            checked: editingPhoto.featured || false,
                                             onChange: (e)=>setEditingPhoto({
                                                     ...editingPhoto,
                                                     featured: e.target.checked
@@ -876,7 +1056,7 @@ function PhotosPage() {
                                             className: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-zinc-600 rounded bg-zinc-700"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 333,
+                                            lineNumber: 459,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
@@ -885,13 +1065,13 @@ function PhotosPage() {
                                             children: "Featured Photo"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 340,
+                                            lineNumber: 466,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                    lineNumber: 332,
+                                    lineNumber: 458,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -907,7 +1087,7 @@ function PhotosPage() {
                                             children: "Cancel"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 345,
+                                            lineNumber: 471,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -916,36 +1096,36 @@ function PhotosPage() {
                                             children: newPhoto ? 'Add Photo' : 'Save Changes'
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                            lineNumber: 355,
+                                            lineNumber: 481,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                                    lineNumber: 344,
+                                    lineNumber: 470,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                            lineNumber: 278,
+                            lineNumber: 404,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                    lineNumber: 274,
+                    lineNumber: 400,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-                lineNumber: 273,
+                lineNumber: 399,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/admin/dashboard/photos/page.tsx",
-        lineNumber: 203,
+        lineNumber: 313,
         columnNumber: 5
     }, this);
 }

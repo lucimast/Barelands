@@ -1,10 +1,10 @@
 [
   {
     "id": "4c5239b2-a9be-4bca-9f06-840dbd6fc05e",
-    "title": "Find your targets!",
+    "title": "Cuernos Del Paine Beach",
     "category": "Mountains",
     "image": "/uploads/515980e8-cccc-43eb-bcd4-98f7a0e95179.jpg",
-    "description": "A view of the Cuernos del Paine peaks from a tiny beach ",
+    "description": "Beautiful landscape photograph of Cuernos Del Paine Beach",
     "location": "Patagonia, Chile",
     "featured": true,
     "dateAdded": "2025-03-20T09:56:24.783Z"
@@ -12,7 +12,7 @@
   {
     "id": "5d7766d0-4898-49ff-8e1f-1d68ffde74d0",
     "title": "Nara Lanterns",
-    "category": "Travel",
+    "category": "Night Sky",
     "image": "/uploads/0c699b59-09d5-498b-96b1-fee1d146d1a8.jpg",
     "description": "Beautiful landscape photograph of Nara Lanterns",
     "location": "Japan",
@@ -26,7 +26,7 @@
     "image": "/uploads/4ac52a48-ce6b-4c41-be3d-8175fac59611.jpg",
     "description": "Beautiful landscape photograph of the Dolomites",
     "location": "Dolomites, Italy",
-    "featured": false,
+    "featured": true,
     "dateAdded": "2025-03-20T09:56:24.784Z"
   },
   {
@@ -41,12 +41,12 @@
   },
   {
     "id": "c5e9bd41-bb7a-4d25-814d-5f36b7a6018a",
-    "title": "A tale of two",
+    "title": "Greek Coast",
     "category": "Oceans",
     "image": "/uploads/ac1d9140-5825-440b-8a0c-221d94a247fa.jpg",
-    "description": "A beautiful sunset on the Greek coast",
-    "location": "Kas beach, Ikaria, Greece",
-    "featured": false,
+    "description": "Beautiful Greek coastal landscape",
+    "location": "Greece",
+    "featured": true,
     "dateAdded": "2025-03-20T09:56:24.784Z"
   },
   {
@@ -72,17 +72,17 @@
   {
     "id": "336f4d1d-8897-4a0e-a945-88dcc034545b",
     "title": "Kallur Lighthouse",
-    "category": "Mountains",
+    "category": "Oceans",
     "image": "/uploads/8d34fadc-14b9-4af6-af8e-9a57e4a15232.jpg",
-    "description": "View from the famous lighthouse with ducks in the foreground",
-    "location": "Faroe Islands",
+    "description": "The famous lighthouse with ducks in the foreground",
+    "location": "Faroe Islands, Denmark",
     "featured": true,
     "dateAdded": "2025-03-20T09:56:24.785Z"
   },
   {
     "id": "60bc93d2-d245-42cd-816e-5d91d13d98af",
     "title": "Matera Sunset",
-    "category": "Italy",
+    "category": "Night Sky",
     "image": "/uploads/c1fb53d7-542f-460e-9627-ca1a4ef9f754.jpg",
     "description": "A beautiful sunset over the ancient city",
     "location": "Matera, Italy",

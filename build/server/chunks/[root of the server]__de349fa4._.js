@@ -234,44 +234,43 @@ async function loadPhotoData() {
         return [];
     }
 }
-async function GET() {
+async function GET(req) {
     try {
-        // Load photos from file
-        let storedPhotos = [];
-        try {
-            storedPhotos = await loadPhotoData();
-        } catch (error) {
-            console.error('Error loading stored photos:', error);
-        // Continue with just in-memory photos if there's an error
+        console.log('API: GET /api/photos request received');
+        // Get query parameters
+        const { searchParams } = new URL(req.url);
+        const category = searchParams.get('category');
+        // Load photos from JSON file first
+        let photosData = await loadPhotosData();
+        console.log(`API: Loaded ${photosData.length} photos from JSON file`);
+        // If no photos from JSON, fall back to the static data
+        if (!photosData || photosData.length === 0) {
+            console.log('API: No photos in JSON file, falling back to static data');
+            photosData = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$data$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["photos"];
         }
-        // Combine photos from both sources, avoiding duplicates by ID
-        const photoMap = new Map();
-        // Add in-memory photos first
-        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$data$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["photos"].forEach((photo)=>{
-            photoMap.set(photo.id, photo);
-        });
-        // Add stored photos, potentially overriding in-memory ones
-        storedPhotos.forEach((photo)=>{
-            photoMap.set(photo.id, photo);
-        });
-        // Convert back to array
-        let allPhotos = Array.from(photoMap.values());
-        // Sort by dateAdded, newest first
-        allPhotos.sort((a, b)=>new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime());
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json(allPhotos);
+        // Filter photos by category if provided
+        let filteredPhotos = photosData;
+        if (category && category !== 'All') {
+            filteredPhotos = photosData.filter((photo)=>photo.category === category);
+            console.log(`API: Filtered to ${filteredPhotos.length} photos in category: ${category}`);
+        }
+        // Sort photos by dateAdded (newest first)
+        filteredPhotos = [
+            ...filteredPhotos
+        ].sort((a, b)=>new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime());
+        console.log(`API: Returning ${filteredPhotos.length} photos`);
+        // Return the photos array directly
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json(filteredPhotos);
     } catch (error) {
         console.error('Error fetching photos:', error);
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-            error: 'Failed to fetch photos'
-        }, {
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json([], {
             status: 500
         });
     }
 }
-const PHOTOS_DATA_PATH = __TURBOPACK__imported__module__$5b$externals$5d2f$path__$5b$external$5d$__$28$path$2c$__cjs$29$__["default"].join(process.cwd(), 'data', 'photos.json');
 // Ensure the data directory exists
 const ensureDataDir = ()=>{
-    const dir = __TURBOPACK__imported__module__$5b$externals$5d2f$path__$5b$external$5d$__$28$path$2c$__cjs$29$__["default"].dirname(PHOTOS_DATA_PATH);
+    const dir = __TURBOPACK__imported__module__$5b$externals$5d2f$path__$5b$external$5d$__$28$path$2c$__cjs$29$__["default"].dirname(PHOTO_DATA_PATH);
     if (!(0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs__$5b$external$5d$__$28$fs$2c$__cjs$29$__["existsSync"])(dir)) {
         (0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs__$5b$external$5d$__$28$fs$2c$__cjs$29$__["mkdirSync"])(dir, {
             recursive: true
@@ -282,13 +281,26 @@ const ensureDataDir = ()=>{
 const loadPhotosData = async ()=>{
     try {
         ensureDataDir();
-        if (!(0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs__$5b$external$5d$__$28$fs$2c$__cjs$29$__["existsSync"])(PHOTOS_DATA_PATH)) {
+        if (!(0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs__$5b$external$5d$__$28$fs$2c$__cjs$29$__["existsSync"])(PHOTO_DATA_PATH)) {
+            console.log(`API: Data file not found at ${PHOTO_DATA_PATH}`);
             return [];
         }
-        const data = (0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs__$5b$external$5d$__$28$fs$2c$__cjs$29$__["readFileSync"])(PHOTOS_DATA_PATH, 'utf-8');
-        return JSON.parse(data);
+        const data = (0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs__$5b$external$5d$__$28$fs$2c$__cjs$29$__["readFileSync"])(PHOTO_DATA_PATH, 'utf-8');
+        console.log(`API: Successfully read data file, size: ${data.length} bytes`);
+        if (!data || data.trim() === '') {
+            console.log(`API: Data file is empty`);
+            return [];
+        }
+        try {
+            const parsedData = JSON.parse(data);
+            console.log(`API: Successfully parsed JSON data, found ${parsedData.length} photos`);
+            return parsedData;
+        } catch (parseError) {
+            console.error(`API: Error parsing JSON data:`, parseError);
+            return [];
+        }
     } catch (error) {
-        console.error('Error loading photos data:', error);
+        console.error('API: Error loading photos data:', error);
         return [];
     }
 };
@@ -296,7 +308,7 @@ const loadPhotosData = async ()=>{
 const savePhotosData = async (photos)=>{
     try {
         ensureDataDir();
-        (0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs__$5b$external$5d$__$28$fs$2c$__cjs$29$__["writeFileSync"])(PHOTOS_DATA_PATH, JSON.stringify(photos, null, 2));
+        (0, __TURBOPACK__imported__module__$5b$externals$5d2f$fs__$5b$external$5d$__$28$fs$2c$__cjs$29$__["writeFileSync"])(PHOTO_DATA_PATH, JSON.stringify(photos, null, 2));
     } catch (error) {
         console.error('Error saving photos data:', error);
         throw error;
@@ -305,13 +317,31 @@ const savePhotosData = async (photos)=>{
 async function POST(request) {
     try {
         const photo = await request.json();
+        console.log('Received photo data:', photo);
+        // Validate the photo data
+        if (!photo || !photo.id || !photo.image || !photo.title) {
+            console.error('Invalid photo data received:', photo);
+            return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+                error: 'Invalid photo data. Required fields: id, image, title'
+            }, {
+                status: 400
+            });
+        }
+        // Load existing photos
         const photos = await loadPhotosData();
+        // Add the new photo
         photos.push(photo);
+        // Save all photos
         await savePhotosData(photos);
-        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json(photo);
+        // Return the saved photo with a success status
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json(photo, {
+            status: 201
+        });
     } catch (error) {
+        console.error('Error saving photo:', error);
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-            error: 'Failed to add photo'
+            error: 'Failed to save photo',
+            details: String(error)
         }, {
             status: 500
         });
@@ -320,11 +350,26 @@ async function POST(request) {
 async function PUT(request) {
     try {
         const photo = await request.json();
+        console.log('Received photo update:', photo);
+        // Validate the photo data
+        if (!photo || !photo.id) {
+            console.error('Invalid photo data for update:', photo);
+            return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+                error: 'Invalid photo data. Required field: id'
+            }, {
+                status: 400
+            });
+        }
+        // Load existing photos
         const photos = await loadPhotosData();
+        // Find the photo to update
         const index = photos.findIndex((p)=>p.id === photo.id);
         if (index !== -1) {
+            // Update the photo
             photos[index] = photo;
+            // Save all photos
             await savePhotosData(photos);
+            // Return the updated photo
             return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json(photo);
         }
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
@@ -333,8 +378,10 @@ async function PUT(request) {
             status: 404
         });
     } catch (error) {
+        console.error('Error updating photo:', error);
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-            error: 'Failed to update photo'
+            error: 'Failed to update photo',
+            details: String(error)
         }, {
             status: 500
         });
@@ -344,6 +391,7 @@ async function DELETE(request) {
     try {
         const { searchParams } = new URL(request.url);
         const photoId = searchParams.get('id');
+        console.log('Attempting to delete photo with ID:', photoId);
         if (!photoId) {
             return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
                 error: 'Photo ID is required'
@@ -351,15 +399,28 @@ async function DELETE(request) {
                 status: 400
             });
         }
+        // Load existing photos
         const photos = await loadPhotosData();
+        // Filter out the photo to delete
         const filteredPhotos = photos.filter((p)=>p.id !== photoId);
+        // Check if any photos were removed
+        if (filteredPhotos.length === photos.length) {
+            return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
+                error: 'Photo not found'
+            }, {
+                status: 404
+            });
+        }
+        // Save the filtered photos
         await savePhotosData(filteredPhotos);
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             success: true
         });
     } catch (error) {
+        console.error('Error deleting photo:', error);
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
-            error: 'Failed to delete photo'
+            error: 'Failed to delete photo',
+            details: String(error)
         }, {
             status: 500
         });
