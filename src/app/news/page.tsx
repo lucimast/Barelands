@@ -5,114 +5,31 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { type Photo } from "@/lib/data"; // Only import the type, not the static data
+import { type Photo } from "@/lib/data";
+import { type BlogPost } from "@/lib/blog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FiCalendar, FiMap, FiImage, FiHome } from "react-icons/fi";
 import { filterValidPhotos } from "@/lib/storage";
 import { isStaticExport, getStaticPhotoData } from "@/lib/static-data";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-// Sample blog posts data
-// In a real implementation, this would come from a CMS or API
-const blogPosts = [
-  {
-    id: "blog-1",
-    title: "The Art of Landscape Photography: Finding the Right Light",
-    excerpt: "Light is perhaps the most crucial element in landscape photography. This post explores techniques for finding and working with different lighting conditions.",
-    coverImage: "/uploads/c8715667-721a-465d-bedc-df749afbd870.jpg",
-    date: "2024-03-15",
-    author: "@mybarelands"
-  },
-  {
-    id: "blog-2",
-    title: "Iceland: A Photographer's Paradise",
-    excerpt: "With its dramatic waterfalls, volcanic landscapes, and ethereal light, Iceland offers endless opportunities for landscape photographers.",
-    coverImage: "/uploads/974baeb1-25ba-44f1-8da8-b134ab07f10c.jpeg",
-    date: "2024-02-28",
-    author: "@mybarelands"
-  }
-];
+// Import blog posts data
+import { blogPosts } from "@/lib/blog";
 
 export default function NewsPage() {
   const [recentPhotos, setRecentPhotos] = useState<Photo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isStatic, setIsStatic] = useState(false);
-  
-  // Check if we're in static export environment
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const staticStatus = isStaticExport();
-      console.log("News page static mode:", staticStatus);
-      setIsStatic(staticStatus);
-    }
-  }, []);
-  
-  useEffect(() => {
-    const fetchPhotos = async () => {
+    const loadPhotos = async () => {
       try {
-        setIsLoading(true);
-        
-        let validPhotos: Photo[] = [];
-        
-        // Check if we're in static export mode
-        if (isStatic) {
-          // Use static data in GitHub Pages environment
-          console.log("News page: Using static photo data");
-          validPhotos = await getStaticPhotoData();
-          
-          // Fix for GitHub Pages: ensure image paths are correct
-          if (typeof window !== 'undefined') {
-            const needsPathFix = window.location.hostname.includes('github.io') || 
-                window.location.pathname.includes('/Barelands/');
-                
-            if (needsPathFix) {
-              validPhotos = validPhotos.map(photo => {
-                if (photo.image && photo.image.startsWith('/') && !photo.image.startsWith('/Barelands/')) {
-                  return {
-                    ...photo,
-                    image: `/Barelands${photo.image}`
-                  };
-                }
-                return photo;
-              });
-              
-              console.log("News page: Fixed GitHub Pages paths", validPhotos[0]?.image);
-            }
-          }
-        } else {
-          // Fetch photos from API instead of using static import
-          try {
-            const response = await fetch('/api/photos');
-            
-            if (!response.ok) {
-              throw new Error('Failed to fetch photos');
-            }
-            
-            const data = await response.json();
-            validPhotos = filterValidPhotos(data);
-          } catch (error) {
-            console.error('API fetch failed, falling back to static data:', error);
-            validPhotos = await getStaticPhotoData();
-          }
-        }
-        
-        console.log("News page: Loaded photos count:", validPhotos.length);
-        
-        // Sort photos by date added (descending) and take the 6 most recent
-        const sortedPhotos = validPhotos.sort((a, b) => {
-          return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
-        }).slice(0, 6);
-        
-        setRecentPhotos(sortedPhotos);
+        const photos = await getStaticPhotoData();
+        setRecentPhotos(filterValidPhotos(photos));
       } catch (error) {
-        console.error('Error fetching photos:', error);
-      } finally {
-        setIsLoading(false);
+        console.error('Error loading photos:', error);
       }
     };
-    
-    fetchPhotos();
-  }, [isStatic]);
+    loadPhotos();
+  }, []);
 
   return (
     <main className="pt-20 pb-24">
@@ -219,8 +136,8 @@ function RecentPhotoCard({ photo }: { photo: Photo }) {
 }
 
 // BlogPostCard component for displaying a blog post
-function BlogPostCard({ post }: { post: any }) {
-  const [imagePath, setImagePath] = useState<string>(post.coverImage);
+function BlogPostCard({ post }: { post: BlogPost }) {
+  const [imagePath, setImagePath] = useState<string>(post.image || '');
   const [imageError, setImageError] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
@@ -230,14 +147,14 @@ function BlogPostCard({ post }: { post: any }) {
     // Fix path for GitHub Pages if needed
     if ((window.location.hostname.includes('github.io') || 
          window.location.pathname.includes('/Barelands/')) && 
-        post.coverImage.startsWith('/') && 
-        !post.coverImage.startsWith('/Barelands/')) {
+        post.image?.startsWith('/') && 
+        !post.image.startsWith('/Barelands/')) {
       
-      const fixedPath = `/Barelands${post.coverImage}`;
+      const fixedPath = `/Barelands${post.image}`;
       console.log(`BlogPostCard: Setting GitHub Pages path: ${fixedPath}`);
       setImagePath(fixedPath);
     }
-  }, [post.coverImage]);
+  }, [post.image]);
   
   // Handle image error
   const handleImageError = () => {
@@ -247,29 +164,31 @@ function BlogPostCard({ post }: { post: any }) {
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className="relative aspect-video rounded-lg overflow-hidden">
-        {imageError ? (
-          <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
-            <p className="text-zinc-500">Image unavailable</p>
-          </div>
-        ) : (
-          <Image
-            src={imagePath}
-            alt={post.title}
-            fill
-            className="object-cover"
-            onError={handleImageError}
-            unoptimized
-          />
-        )}
-      </div>
+      {imagePath && (
+        <div className="relative aspect-video rounded-lg overflow-hidden">
+          {imageError ? (
+            <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
+              <p className="text-zinc-500">Image unavailable</p>
+            </div>
+          ) : (
+            <Image
+              src={imagePath}
+              alt={post.title}
+              fill
+              className="object-cover"
+              onError={handleImageError}
+              unoptimized
+            />
+          )}
+        </div>
+      )}
       <div>
         <div className="flex items-center text-zinc-400 text-sm mb-2">
           <FiCalendar className="mr-2" />
           <span>{format(new Date(post.date), 'MMMM d, yyyy')}</span>
         </div>
         <h3 className="text-xl font-medium mb-2">{post.title}</h3>
-        <p className="text-zinc-400">{post.excerpt}</p>
+        <p className="text-zinc-400">{post.content.substring(0, 200)}...</p>
         <div className="mt-4">
           <button
             onClick={() => setIsDialogOpen(true)}
@@ -291,15 +210,13 @@ function BlogPostCard({ post }: { post: any }) {
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
-              <DialogTitle className="text-xl">Blog Section Under Construction</DialogTitle>
+              <DialogTitle className="text-xl">{post.title}</DialogTitle>
               <DialogDescription className="text-zinc-300">
-                <p className="mb-4">
-                  Thank you for your interest in our blog! This section is currently under construction.
-                </p>
-                <p>
-                  Check back soon for exciting articles, behind-the-scenes stories, 
-                  photography tips, and updates from our landscape photography adventures.
-                </p>
+                <div className="prose prose-invert max-w-none">
+                  {post.content.split('\n').map((paragraph, i) => (
+                    <p key={i} className="mb-4">{paragraph}</p>
+                  ))}
+                </div>
               </DialogDescription>
             </DialogContent>
           </Dialog>
