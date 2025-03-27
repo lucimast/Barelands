@@ -1,9 +1,0 @@
-{
-  "/admin/dashboard/photos/page": "app/admin/dashboard/photos/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/photos/route": "app/api/photos/route.js",
-  "/news/page": "app/news/page.js",
-  "/page": "app/page.js",
-  "/portfolio/page": "app/portfolio/page.js"
-}

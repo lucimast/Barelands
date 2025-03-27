@@ -1,27 +1,30 @@
 "use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-export default function AdminDashboardLayout({
+export default function DashboardLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('githubToken');
-    if (!token) {
-      router.push('/admin/login');
+    if (status === "unauthenticated") {
+      router.push("/admin/login");
     }
-  }, [router]);
+  }, [status, router]);
 
-  return (
-    <div className="min-h-screen bg-zinc-900">
-      <main className="p-8">
-        {children}
-      </main>
-    </div>
-  );
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 } 
