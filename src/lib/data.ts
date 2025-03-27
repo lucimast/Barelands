@@ -25,7 +25,7 @@ export const photoCategories = ["All", "Mountains", "Deserts", "Forests", "Ocean
 
 // Photos imported from the user's local collection
 export const photos: Photo[] = [
-  {
+{
     "id": "4c5239b2-a9be-4bca-9f06-840dbd6fc05e",
     "title": "Cuernos Del Paine Beach",
     "category": "Mountains",
@@ -114,7 +114,17 @@ export const photos: Photo[] = [
     "location": "Matera, Italy",
     "featured": true,
     "dateAdded": "2025-03-20T09:56:24.785Z"
-  }
+  },
+  {
+  id: "1743099563347",
+  title: "Evening in Hamnoy",
+  category: "Mountains",
+  image: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743099529/landscape-photos/kp0xnlvne3pgyrmxbgle.jpg",
+  description: "",
+  location: "Lofoten, Norway",
+  featured: true,
+  dateAdded: "2025-03-27T18:19:23.347Z"
+}
 ];
 
 export type AboutInfo = {
