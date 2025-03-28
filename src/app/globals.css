@@ -31,19 +31,18 @@
     --chart-5: 27 87% 67%;
   }
 
-  /* Super aggressive protection for images site-wide */
+  /* Image protection - allow left-clicks but prevent right-clicks */
   img, 
   [style*="background-image"],
   svg,
   picture,
   image {
     @apply select-none !important;
-    pointer-events: none !important;
-    user-select: none !important;
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
     -ms-user-select: none !important;
     -webkit-touch-callout: none !important;
+    /* Remove pointer-events: none to allow left-clicks */
   }
   
   /* Target all possible Next.js Image component elements */
@@ -54,7 +53,7 @@
   [style*="overflow: hidden"],
   [data-nimg],
   span[style] {
-    pointer-events: none !important;
+    /* Remove pointer-events: none to allow left-clicks */
     user-select: none !important;
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
@@ -69,7 +68,7 @@
   figure,
   .rounded-lg,
   .overflow-hidden {
-    pointer-events: none !important;
+    /* Remove pointer-events: none to allow left-clicks */
     user-select: none !important;
     -webkit-user-select: none !important;
     -moz-user-select: none !important;

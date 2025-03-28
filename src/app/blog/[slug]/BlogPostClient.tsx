@@ -19,8 +19,11 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   // Disable right click globally on this page
   useEffect(() => {
     const disableRightClick = (e: MouseEvent) => {
-      e.preventDefault();
-      return false;
+      // Only prevent right-clicks (button 2), allow left clicks
+      if (e.button === 2) {
+        e.preventDefault();
+        return false;
+      }
     };
     
     document.addEventListener('contextmenu', disableRightClick);
