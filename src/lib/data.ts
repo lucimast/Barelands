@@ -53,16 +53,6 @@ export const photos: Photo[] = [
     "location": "Brazil",
     "featured": true,
     "dateAdded": "2025-03-20T09:56:24.784Z"
-  },
-  {
-    "id": "c5e9bd41-bb7a-4d25-814d-5f36b7a6018a",
-    "title": "Greek Coast",
-    "category": "Oceans",
-    "image": "/uploads/ac1d9140-5825-440b-8a0c-221d94a247fa.jpg",
-    "description": "Beautiful Greek coastal landscape",
-    "location": "Greece",
-    "featured": false,
-    "dateAdded": "2025-03-20T09:56:24.784Z"
   },{
     "id": "336f4d1d-8897-4a0e-a945-88dcc034545b",
     "title": "Kallur Lighthouse",
