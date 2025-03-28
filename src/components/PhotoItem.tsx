@@ -137,6 +137,7 @@ export default function PhotoItem({ item, selectedPhotoId }: { item: Photo, sele
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   onError={() => setImageError(true)}
                   unoptimized
+                  onContextMenu={(e) => e.preventDefault()}
                 />
               )}
             </div>
@@ -164,6 +165,7 @@ export default function PhotoItem({ item, selectedPhotoId }: { item: Photo, sele
                     className="object-cover rounded-md"
                     onError={() => setImageError(true)}
                     unoptimized
+                    onContextMenu={(e) => e.preventDefault()}
                   />
                 )}
                 {!imageError && (
