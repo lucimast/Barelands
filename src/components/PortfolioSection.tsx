@@ -28,8 +28,9 @@ export default function PortfolioSection() {
   // Check if we're on the homepage and if we're in static export
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // More comprehensive check for GitHub Pages URL structure
+      // More comprehensive check for URL structure
       const path = window.location.pathname;
+      
       // All possible homepage URL patterns
       const isRootPath = path === '/' || 
                          path === '/index.html' || 
@@ -39,7 +40,9 @@ export default function PortfolioSection() {
                                 path === '/Barelands' ||
                                 path === '/Barelands/index';
       
-      // Set homepage flag
+      console.log(`Current path: ${path}, hostname: ${window.location.hostname}`);
+      
+      // Set homepage flag - applies to both GitHub Pages and custom domain
       const homepageStatus = isRootPath || isGitHubPagesRoot;
       setIsHomepage(homepageStatus);
       
@@ -172,15 +175,16 @@ export default function PortfolioSection() {
   // Helper function to apply filters consistently
   const applyFilters = (photos: Photo[], onHomepage: boolean, category: string) => {
     // First filter by homepage status
-    console.log("FILTERING - All photos:", photos.map(p => ({id: p.id.substring(0, 8), title: p.title, featured: p.featured})));
+    console.log("FILTERING - All photos:", photos);
     const filteredByFeatured = onHomepage 
       ? photos.filter(photo => {
+          // Extra safety: make sure we strictly check for true to avoid any falsy/truthy issues
           const isIncluded = photo.featured === true;
           console.log(`Photo ${photo.title} - featured: ${photo.featured} (${typeof photo.featured}) - included: ${isIncluded}`);
           return isIncluded;
         })
       : photos;
-    console.log("FILTERING - Featured photos:", filteredByFeatured.map(p => ({id: p.id.substring(0, 8), title: p.title})));
+    console.log("FILTERING - Featured photos:", filteredByFeatured);
     
     console.log(`Filtered by featured: ${filteredByFeatured.length} photos`);
     
