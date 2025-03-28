@@ -92,6 +92,16 @@ export const photos: Photo[] = [
   location: "Cornisello, Dolomites",
   featured: true,
   dateAdded: "2025-03-28T10:55:52.224Z"
+},
+  {
+  id: "1743159500591",
+  title: "Endless Sunset",
+  category: "Mountains",
+  image: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743159407/landscape-photos/s4um6nq3bnqfvgnlam9b.jpg",
+  description: "\nThis photo almost costed me an elbow. I got so mesmerized by the light and the atmosphere that I failed to notice how slippery the rocks were on this beach. So I fell badly on one of those and to protect my camera I pointed my elbow down. I still feel the pain if I think about it. though a couple of years later I think it was worth it ",
+  location: "Vareid Beach, Lofoten",
+  featured: true,
+  dateAdded: "2025-03-28T10:58:20.591Z"
 }
 ];
 
