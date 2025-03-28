@@ -51,6 +51,43 @@ export default function BuyPrintPage() {
   const galleryTabRef = useRef<HTMLButtonElement>(null);
   const inquiryTabRef = useRef<HTMLButtonElement>(null);
 
+  // Disable right click globally on this page
+  useEffect(() => {
+    const disableRightClick = (e: MouseEvent) => {
+      // Only prevent right-clicks (button 2), allow left clicks
+      if (e.button === 2) {
+        e.preventDefault();
+        return false;
+      }
+    };
+    
+    document.addEventListener('contextmenu', disableRightClick);
+    
+    // Clean up event listener
+    return () => {
+      document.removeEventListener('contextmenu', disableRightClick);
+    };
+  }, []);
+  
+  // Prevent image dragging
+  useEffect(() => {
+    const preventImageDrag = (e: DragEvent) => {
+      e.preventDefault();
+      return false;
+    };
+    
+    // Prevent drag start
+    document.addEventListener('dragstart', preventImageDrag);
+    // Prevent drop
+    document.addEventListener('drop', preventImageDrag);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('dragstart', preventImageDrag);
+      document.removeEventListener('drop', preventImageDrag);
+    };
+  }, []);
+
   // Initialize the form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,6 +99,22 @@ export default function BuyPrintPage() {
       photoTitle: "",
     },
   });
+
+  // Check for photo ID in URL query parameters
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const photoId = params.get('photo');
+      
+      if (photoId) {
+        // Find the photo by ID
+        const photo = photos.find(p => p.id === photoId);
+        if (photo) {
+          handlePhotoSelect(photo);
+        }
+      }
+    }
+  }, []);
 
   // Filter photos based on selected category
   const filteredPhotos = useMemo(() => {
@@ -155,14 +208,20 @@ export default function BuyPrintPage() {
 
   // Function to switch to inquiry tab
   const switchToInquiryTab = () => {
-    // Redirect to contact page with prefilled information about the selected photo
     if (selectedPhoto) {
-      const queryParams = new URLSearchParams({
-        subject: `Print Inquiry: ${selectedPhoto.title}`,
-        message: `I'm interested in purchasing a print of "${selectedPhoto.title}" (${selectedPhoto.location}). Please provide me with details on available sizes, pricing, and shipping options.`
-      }).toString();
+      // Set the form values
+      form.setValue("photoId", selectedPhoto.id);
+      form.setValue("photoTitle", selectedPhoto.title);
+      form.setValue(
+        "message",
+        `I'm interested in purchasing a print of "${selectedPhoto.title}" (${selectedPhoto.location}). Please provide me with details on available sizes, pricing, and shipping options.`
+      );
       
-      window.location.href = `/contact?${queryParams}`;
+      // Switch to inquiry tab
+      setActiveTab("inquiry");
+      if (inquiryTabRef.current) {
+        inquiryTabRef.current.click();
+      }
     }
   };
 

@@ -92,7 +92,7 @@ export default function PhotoItem({ item, selectedPhotoId }: { item: Photo, sele
             {item.available && (
               <div className="mt-4 flex items-center justify-between">
                 <a 
-                  href="/prints?photo=${item.id}" 
+                  href={`/prints?photo=${item.id}`}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-medium text-white transition-colors"
                   onClick={() => {
                     trackEvent('buy_print_click', {
