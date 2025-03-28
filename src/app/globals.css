@@ -37,6 +37,24 @@
     -webkit-user-select: none;
     -webkit-touch-callout: none;
   }
+  
+  /* Target Next.js Image component wrappers */
+  span[style*="box-sizing: border-box"] > img,
+  div > span > img,
+  [style*="position:absolute"] > img,
+  [style*="position: absolute"] > img {
+    pointer-events: none !important;
+  }
+  
+  /* Prevent right-click on image containers */
+  .relative > span,
+  [role="img"],
+  [style*="position:relative"] span,
+  [style*="position: relative"] span {
+    @apply select-none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
 
   .dark {
     --background: 240 10% 3.9%;

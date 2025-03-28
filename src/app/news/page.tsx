@@ -209,7 +209,7 @@ function RecentPhotoCard({ photo }: { photo: Photo }) {
   };
   
   return (
-    <div className="relative aspect-square overflow-hidden rounded-lg group">
+    <div className="relative aspect-square overflow-hidden rounded-lg group" onContextMenu={(e) => e.preventDefault()}>
       <Link href={`/portfolio?photo=${photo.id}`}>
         {imageError ? (
           <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
@@ -223,6 +223,8 @@ function RecentPhotoCard({ photo }: { photo: Photo }) {
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             onError={handleImageError}
             unoptimized
+            onContextMenu={(e) => e.preventDefault()}
+            draggable="false"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4">
@@ -270,7 +272,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className={`relative rounded-lg overflow-hidden max-w-xs mx-auto w-full h-48 ${isPortrait ? 'aspect-[3/4]' : 'aspect-video'}`}>
+      <div className={`relative rounded-lg overflow-hidden max-w-xs mx-auto w-full h-48 ${isPortrait ? 'aspect-[3/4]' : 'aspect-video'}`} onContextMenu={(e) => e.preventDefault()}>
         {imageError ? (
           <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
             <p className="text-zinc-500">Image unavailable</p>
