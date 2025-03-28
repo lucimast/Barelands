@@ -1,8 +1,7 @@
 "use client";
 
-import { FiImage, FiSettings, FiUsers, FiBarChart2 } from 'react-icons/fi';
+import { FiImage, FiSettings, FiUsers, FiBarChart2, FiEdit3, FiCheckCircle } from 'react-icons/fi';
 import Link from 'next/link';
-import { FiCommand, FiEdit3, FiBriefcase, FiCheckCircle, FiMessageCircle } from 'react-icons/fi';
 
 export default function DashboardPage() {
   return (
@@ -21,6 +20,20 @@ export default function DashboardPage() {
               <div>
                 <h2 className="text-xl font-semibold text-white">Photos</h2>
                 <p className="text-zinc-400">Manage your photo collection</p>
+              </div>
+            </div>
+          </Link>
+          
+          {/* Blog Posts Card */}
+          <Link 
+            href="/admin/dashboard/blog"
+            className="block p-6 bg-zinc-800 rounded-lg shadow-lg hover:bg-zinc-700 transition-colors"
+          >
+            <div className="flex items-center">
+              <FiEdit3 className="h-8 w-8 text-amber-500 mr-4" />
+              <div>
+                <h2 className="text-xl font-semibold text-white">Blog Posts</h2>
+                <p className="text-zinc-400">Create and manage blog content</p>
               </div>
             </div>
           </Link>

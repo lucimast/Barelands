@@ -10,6 +10,7 @@ import { signOut } from "next-auth/react";
 const adminNavItems = [
   { name: "Dashboard", path: "/admin/dashboard" },
   { name: "Photos", path: "/admin/dashboard/photos" },
+  { name: "Blog Posts", path: "/admin/dashboard/blog" },
   { name: "Analytics", path: "/admin/dashboard/analytics" },
 ];
 
