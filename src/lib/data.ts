@@ -82,6 +82,16 @@ export const photos: Photo[] = [
   location: "Menetes, Karpathos, Greece",
   featured: true,
   dateAdded: "2025-03-28T10:52:15.812Z"
+},
+  {
+  id: "1743159352224",
+  title: "Mist and Flowers",
+  category: "Mountains",
+  image: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743159225/landscape-photos/jx0dbxsqcnwuu4e0yniz.jpg",
+  description: "A shot of a mountain river stream taken during a beautiful hike in the Dolomites, with their ever changing weather",
+  location: "Cornisello, Dolomites",
+  featured: true,
+  dateAdded: "2025-03-28T10:55:52.224Z"
 }
 ];
 
