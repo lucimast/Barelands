@@ -25,7 +25,7 @@ export const photoCategories = ["All", "Mountains", "Deserts", "Forests", "Ocean
 
 // Photos imported from the user's local collection
 export const photos: Photo[] = [
-{
+  {
     "id": "4c5239b2-a9be-4bca-9f06-840dbd6fc05e",
     "title": "Cuernos Del Paine Beach",
     "category": "Mountains",
@@ -74,7 +74,8 @@ export const photos: Photo[] = [
     "location": "Greece",
     "featured": false,
     "dateAdded": "2025-03-20T09:56:24.784Z"
-  },{
+  },
+  {
     "id": "336f4d1d-8897-4a0e-a945-88dcc034545b",
     "title": "Kallur Lighthouse",
     "category": "Oceans",
@@ -95,25 +96,25 @@ export const photos: Photo[] = [
     "dateAdded": "2025-03-20T09:56:24.785Z"
   },
   {
-  id: "1743099563347",
-  title: "Evening in Hamnoy",
-  category: "Mountains",
-  image: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743099529/landscape-photos/kp0xnlvne3pgyrmxbgle.jpg",
-  description: "",
-  location: "Lofoten, Norway",
-  featured: true,
-  dateAdded: "2025-03-27T18:19:23.347Z"
-},
+    "id": "1743099563347",
+    "title": "Evening in Hamnoy",
+    "category": "Mountains",
+    "image": "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743099529/landscape-photos/kp0xnlvne3pgyrmxbgle.jpg",
+    "description": "",
+    "location": "Lofoten, Norway",
+    "featured": true,
+    "dateAdded": "2025-03-27T18:19:23.347Z"
+  },
   {
-  id: "1743103090823",
-  title: "Endless Sunset",
-  category: "Mountains",
-  image: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743103057/landscape-photos/qxuh5cr4hyjyy1z0ntnw.jpg",
-  description: "",
-  location: "Vareid, Lofoten",
-  featured: true,
-  dateAdded: "2025-03-27T19:18:10.823Z"
-}
+    "id": "1743103090823",
+    "title": "Endless Sunset",
+    "category": "Mountains",
+    "image": "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743103057/landscape-photos/qxuh5cr4hyjyy1z0ntnw.jpg",
+    "description": "",
+    "location": "Vareid, Lofoten",
+    "featured": true,
+    "dateAdded": "2025-03-27T19:18:10.823Z"
+  }
 ];
 
 export type AboutInfo = {
