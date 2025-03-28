@@ -124,6 +124,16 @@ export const photos: Photo[] = [
   location: "Nara, Japan",
   featured: false,
   dateAdded: "2025-03-28T11:09:32.658Z"
+},
+  {
+  id: "1743160329322",
+  title: "White",
+  category: "Mountains",
+  image: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743160216/landscape-photos/gquer7iejqty41t99p3j.jpg",
+  description: "One fine morning on the slopes",
+  location: "Zermatt, Switzerland",
+  featured: true,
+  dateAdded: "2025-03-28T11:12:09.322Z"
 }
 ];
 
