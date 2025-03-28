@@ -5,36 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { type Photo } from "@/lib/data"; // Only import the type, not the static data
+import { type Photo, type BlogPost } from "@/lib/data"; // Only import the type, not the static data
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FiCalendar, FiMap, FiImage, FiHome } from "react-icons/fi";
 import { filterValidPhotos } from "@/lib/storage";
-import { isStaticExport, getStaticPhotoData } from "@/lib/static-data";
+import { isStaticExport, getStaticPhotoData, getStaticBlogPostData } from "@/lib/static-data";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-
-// Sample blog posts data
-// In a real implementation, this would come from a CMS or API
-const blogPosts = [
-  {
-    id: "blog-1",
-    title: "The Art of Landscape Photography: Finding the Right Light",
-    excerpt: "Light is perhaps the most crucial element in landscape photography. This post explores techniques for finding and working with different lighting conditions.",
-    coverImage: "/uploads/c8715667-721a-465d-bedc-df749afbd870.jpg",
-    date: "2024-03-15",
-    author: "@mybarelands"
-  },
-  {
-    id: "blog-2",
-    title: "Iceland: A Photographer's Paradise",
-    excerpt: "With its dramatic waterfalls, volcanic landscapes, and ethereal light, Iceland offers endless opportunities for landscape photographers.",
-    coverImage: "/uploads/974baeb1-25ba-44f1-8da8-b134ab07f10c.jpeg",
-    date: "2024-02-28",
-    author: "@mybarelands"
-  }
-];
 
 export default function NewsPage() {
   const [recentPhotos, setRecentPhotos] = useState<Photo[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isStatic, setIsStatic] = useState(false);
   
@@ -114,6 +94,35 @@ export default function NewsPage() {
     fetchPhotos();
   }, [isStatic]);
 
+  useEffect(() => {
+    const fetchBlogPosts = async () => {
+      try {
+        let posts: BlogPost[] = [];
+        
+        // Check if we're in static export mode
+        if (isStatic) {
+          console.log("News page: Using static blog data");
+          posts = await getStaticBlogPostData();
+        } else {
+          // In a real implementation, we would fetch from API
+          // For now, use the static data
+          posts = await getStaticBlogPostData();
+        }
+        
+        // Sort blog posts by date (newest first)
+        const sortedPosts = posts.sort((a, b) => {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+        
+        setBlogPosts(sortedPosts);
+      } catch (error) {
+        console.error('Error fetching blog posts:', error);
+      }
+    };
+    
+    fetchBlogPosts();
+  }, [isStatic]);
+
   return (
     <main className="pt-20 pb-24">
       <div className="container mx-auto px-4">
@@ -154,9 +163,16 @@ export default function NewsPage() {
 
           <TabsContent value="blog">
             <div className="space-y-10">
-              {blogPosts.map((post) => (
-                <BlogPostCard key={post.id} post={post} />
-              ))}
+              {blogPosts.length > 0 ? (
+                blogPosts.map((post) => (
+                  <BlogPostCard key={post.id} post={post} />
+                ))
+              ) : (
+                <div className="text-center p-8 bg-zinc-800 rounded-lg">
+                  <h3 className="text-xl font-medium mb-2">No Blog Posts Yet</h3>
+                  <p className="text-zinc-400">Check back soon for updates and stories!</p>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
@@ -219,10 +235,9 @@ function RecentPhotoCard({ photo }: { photo: Photo }) {
 }
 
 // BlogPostCard component for displaying a blog post
-function BlogPostCard({ post }: { post: any }) {
+function BlogPostCard({ post }: { post: BlogPost }) {
   const [imagePath, setImagePath] = useState<string>(post.coverImage);
   const [imageError, setImageError] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -271,8 +286,8 @@ function BlogPostCard({ post }: { post: any }) {
         <h3 className="text-xl font-medium mb-2">{post.title}</h3>
         <p className="text-zinc-400">{post.excerpt}</p>
         <div className="mt-4">
-          <button
-            onClick={() => setIsDialogOpen(true)}
+          <Link
+            href={`/blog/${post.id}`}
             className="inline-flex items-center text-zinc-300 hover:text-white text-sm"
           >
             Read more
@@ -287,22 +302,7 @@ function BlogPostCard({ post }: { post: any }) {
             >
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
-          </button>
-          
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
-              <DialogTitle className="text-xl">Blog Section Under Construction</DialogTitle>
-              <DialogDescription className="text-zinc-300">
-                <p className="mb-4">
-                  Thank you for your interest in our blog! This section is currently under construction.
-                </p>
-                <p>
-                  Check back soon for exciting articles, behind-the-scenes stories, 
-                  photography tips, and updates from our landscape photography adventures.
-                </p>
-              </DialogDescription>
-            </DialogContent>
-          </Dialog>
+          </Link>
         </div>
       </div>
     </div>

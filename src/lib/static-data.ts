@@ -1,7 +1,7 @@
 // Static data utility functions for static export (GitHub Pages)
 // This file is used for static export environments to load data without API calls
 
-import { photos as defaultPhotos, Photo } from '@/lib/data';
+import { photos as defaultPhotos, Photo, blogPosts as defaultBlogPosts, BlogPost } from '@/lib/data';
 
 /**
  * Returns a promise that resolves to the photos from the static data
@@ -46,6 +46,16 @@ export async function getStaticSlideshowPhotos(): Promise<Photo[]> {
   // Final fallback: first 3 photos
   console.log("Using first 3 photos for slideshow");
   return defaultPhotos.slice(0, Math.min(3, defaultPhotos.length));
+}
+
+/**
+ * Returns a promise that resolves to the blog posts from the static data
+ * This function mimics the API behavior but works in static exports
+ */
+export async function getStaticBlogPostData(): Promise<BlogPost[]> {
+  console.log("Getting static blog post data:", 
+    defaultBlogPosts.map(p => ({ id: p.id, title: p.title })));
+  return [...defaultBlogPosts]; // Return a copy of the blog posts array
 }
 
 /**

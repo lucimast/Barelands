@@ -57,6 +57,55 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  /* Blog post styling */
+  .prose h1 {
+    @apply text-2xl font-bold mt-8 mb-4;
+  }
+  
+  .prose h2 {
+    @apply text-xl font-bold mt-6 mb-3;
+  }
+  
+  .prose h3 {
+    @apply text-lg font-bold mt-5 mb-2;
+  }
+  
+  .prose p {
+    @apply my-4 text-zinc-300;
+  }
+  
+  .prose ul {
+    @apply list-disc pl-6 my-4;
+  }
+  
+  .prose ol {
+    @apply list-decimal pl-6 my-4;
+  }
+  
+  .prose li {
+    @apply my-1 text-zinc-300;
+  }
+  
+  .prose a {
+    @apply text-blue-400 hover:underline;
+  }
+  
+  .prose blockquote {
+    @apply border-l-4 border-zinc-700 pl-4 italic my-6;
+  }
+  
+  .prose pre {
+    @apply bg-zinc-800 p-4 rounded-md overflow-x-auto my-6;
+  }
+  
+  .prose code {
+    @apply bg-zinc-800 px-1 py-0.5 rounded text-sm;
+  }
+  
+  .prose img {
+    @apply rounded-lg my-6 w-full;
+  }
 }
 
 @layer base {
