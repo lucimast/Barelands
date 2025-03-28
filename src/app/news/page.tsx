@@ -18,6 +18,40 @@ export default function NewsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isStatic, setIsStatic] = useState(false);
   
+  // Disable right click globally on this page
+  useEffect(() => {
+    const disableRightClick = (e: MouseEvent) => {
+      e.preventDefault();
+      return false;
+    };
+    
+    document.addEventListener('contextmenu', disableRightClick);
+    
+    // Clean up event listener
+    return () => {
+      document.removeEventListener('contextmenu', disableRightClick);
+    };
+  }, []);
+  
+  // Prevent image dragging
+  useEffect(() => {
+    const preventImageDrag = (e: DragEvent) => {
+      e.preventDefault();
+      return false;
+    };
+    
+    // Prevent drag start
+    document.addEventListener('dragstart', preventImageDrag);
+    // Prevent drop
+    document.addEventListener('drop', preventImageDrag);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('dragstart', preventImageDrag);
+      document.removeEventListener('drop', preventImageDrag);
+    };
+  }, []);
+  
   // Check if we're in static export environment
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -210,7 +244,17 @@ function RecentPhotoCard({ photo }: { photo: Photo }) {
   
   return (
     <div className="relative aspect-square overflow-hidden rounded-lg group" onContextMenu={(e) => e.preventDefault()}>
-      <Link href={`/portfolio?photo=${photo.id}`}>
+      <Link 
+        href={`/portfolio?photo=${photo.id}`}
+        className="pointer-events-auto"
+        onClick={(e) => {
+          // Allow click but prevent default browser actions on right-click
+          if (e.button === 2) {
+            e.preventDefault();
+            return false;
+          }
+        }}
+      >
         {imageError ? (
           <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
             <p className="text-zinc-500 text-sm">Image unavailable</p>
@@ -273,22 +317,34 @@ function BlogPostCard({ post }: { post: BlogPost }) {
   return (
     <div className="flex flex-col space-y-4">
       <div className={`relative rounded-lg overflow-hidden max-w-xs mx-auto w-full h-48 ${isPortrait ? 'aspect-[3/4]' : 'aspect-video'}`} onContextMenu={(e) => e.preventDefault()}>
-        {imageError ? (
-          <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
-            <p className="text-zinc-500">Image unavailable</p>
-          </div>
-        ) : (
-          <Image
-            src={imagePath}
-            alt={post.title}
-            fill
-            className={`${isPortrait ? 'object-contain' : 'object-cover'}`}
-            onError={handleImageError}
-            unoptimized
-            onContextMenu={(e) => e.preventDefault()}
-            draggable="false"
-          />
-        )}
+        <Link
+          href={`/blog/${post.id}`}
+          className="pointer-events-auto"
+          onClick={(e) => {
+            // Allow click but prevent default browser actions on right-click
+            if (e.button === 2) {
+              e.preventDefault();
+              return false;
+            }
+          }}
+        >
+          {imageError ? (
+            <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
+              <p className="text-zinc-500">Image unavailable</p>
+            </div>
+          ) : (
+            <Image
+              src={imagePath}
+              alt={post.title}
+              fill
+              className={`${isPortrait ? 'object-contain' : 'object-cover'}`}
+              onError={handleImageError}
+              unoptimized
+              onContextMenu={(e) => e.preventDefault()}
+              draggable="false"
+            />
+          )}
+        </Link>
       </div>
       <div>
         <div className="flex items-center text-zinc-400 text-sm mb-2">
@@ -300,7 +356,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
         <div className="mt-4">
           <Link
             href={`/blog/${post.id}`}
-            className="inline-flex items-center text-zinc-300 hover:text-white text-sm"
+            className="inline-flex items-center text-zinc-300 hover:text-white text-sm pointer-events-auto"
           >
             Read more
             <svg 
