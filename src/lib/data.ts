@@ -75,16 +75,6 @@ export const photos: Photo[] = [
     "featured": false,
     "dateAdded": "2025-03-20T09:56:24.784Z"
   },{
-    "id": "28b20bbe-a70d-4fc9-8ba0-9d30d6f39a70",
-    "title": "Cadini di Misurina",
-    "category": "Mountains",
-    "image": "/uploads/c8715667-721a-465d-bedc-df749afbd870.jpg",
-    "description": "Mountain view with wildflowers in the foreground",
-    "location": "Dolomites, Italy",
-    "featured": false,
-    "dateAdded": "2025-03-20T09:56:24.785Z"
-  },
-  {
     "id": "336f4d1d-8897-4a0e-a945-88dcc034545b",
     "title": "Kallur Lighthouse",
     "category": "Oceans",
