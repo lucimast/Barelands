@@ -74,18 +74,7 @@ export const photos: Photo[] = [
     "location": "Greece",
     "featured": true,
     "dateAdded": "2025-03-20T09:56:24.784Z"
-  },
-  {
-    "id": "78ffb2b0-3027-409d-b1fd-6145a2b752fa",
-    "title": "Windmills Leros Night",
-    "category": "Night Sky",
-    "image": "/uploads/c12ce531-80bc-40c3-8b14-f54382ab341e.jpg",
-    "description": "Windmills under the night sky",
-    "location": "Leros, Greece",
-    "featured": true,
-    "dateAdded": "2025-03-20T09:56:24.785Z"
-  },
-  {
+  },{
     "id": "28b20bbe-a70d-4fc9-8ba0-9d30d6f39a70",
     "title": "Cadini di Misurina",
     "category": "Mountains",
