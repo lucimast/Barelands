@@ -131,11 +131,8 @@ export default function NewsPage() {
   useEffect(() => {
     const fetchBlogPosts = async () => {
       try {
-        // Set empty array to hide the placeholder blog posts
-        const posts: BlogPost[] = [];
+        let posts: BlogPost[] = [];
         
-        // Previous code commented out
-        /*
         // Check if we're in static export mode
         if (isStatic) {
           console.log("News page: Using static blog data");
@@ -146,13 +143,21 @@ export default function NewsPage() {
           posts = await getStaticBlogPostData();
         }
         
+        // Filter out the placeholder blog posts (they have specific IDs or titles)
+        const placeholderTitles = [
+          "Iceland: A Photographer's Paradise",
+          "The Art of Landscape Photography: Finding the Right Light",
+          "Patagonia: A Photographer's Journey to the End of the World"
+        ];
+        
+        const userPosts = posts.filter(post => !placeholderTitles.includes(post.title));
+        
         // Sort blog posts by date (newest first)
-        const sortedPosts = posts.sort((a, b) => {
+        const sortedPosts = userPosts.sort((a, b) => {
           return new Date(b.date).getTime() - new Date(a.date).getTime();
         });
-        */
         
-        setBlogPosts(posts);
+        setBlogPosts(sortedPosts);
       } catch (error) {
         console.error('Error fetching blog posts:', error);
       }
