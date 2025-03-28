@@ -34,18 +34,7 @@ export const photos: Photo[] = [
     "location": "Patagonia, Chile",
     "featured": true,
     "dateAdded": "2025-03-20T09:56:24.783Z"
-  },
-  {
-    "id": "5d7766d0-4898-49ff-8e1f-1d68ffde74d0",
-    "title": "Nara Lanterns",
-    "category": "Night Sky",
-    "image": "/uploads/0c699b59-09d5-498b-96b1-fee1d146d1a8.jpg",
-    "description": "Beautiful landscape photograph of Nara Lanterns",
-    "location": "Japan",
-    "featured": false,
-    "dateAdded": "2025-03-20T09:56:24.784Z"
-  },
-  {
+  },{
     "id": "7cb6c094-084f-4246-970a-4d8303d1175f",
     "title": "Passo Giau Vertical",
     "category": "Mountains",
