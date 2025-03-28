@@ -35,16 +35,6 @@ export const photos: Photo[] = [
     "featured": true,
     "dateAdded": "2025-03-20T09:56:24.783Z"
   },{
-    "id": "7cb6c094-084f-4246-970a-4d8303d1175f",
-    "title": "Passo Giau Vertical",
-    "category": "Mountains",
-    "image": "/uploads/4ac52a48-ce6b-4c41-be3d-8175fac59611.jpg",
-    "description": "Beautiful landscape photograph of the Dolomites",
-    "location": "Dolomites, Italy",
-    "featured": true,
-    "dateAdded": "2025-03-20T09:56:24.784Z"
-  },
-  {
     "id": "6d215144-8604-4912-aea8-2560a2c71611",
     "title": "Iguazu Falls",
     "category": "Forests",
