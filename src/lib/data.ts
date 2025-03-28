@@ -36,26 +36,6 @@ export const photos: Photo[] = [
     "dateAdded": "2025-03-20T09:56:24.783Z"
   },
   {
-    "id": "5d7766d0-4898-49ff-8e1f-1d68ffde74d0",
-    "title": "Nara Lanterns",
-    "category": "Night Sky",
-    "image": "/uploads/0c699b59-09d5-498b-96b1-fee1d146d1a8.jpg",
-    "description": "Beautiful landscape photograph of Nara Lanterns",
-    "location": "Japan",
-    "featured": false,
-    "dateAdded": "2025-03-20T09:56:24.784Z"
-  },
-  {
-    "id": "7cb6c094-084f-4246-970a-4d8303d1175f",
-    "title": "Passo Giau Vertical",
-    "category": "Mountains",
-    "image": "/uploads/4ac52a48-ce6b-4c41-be3d-8175fac59611.jpg",
-    "description": "Beautiful landscape photograph of the Dolomites",
-    "location": "Dolomites, Italy",
-    "featured": true,
-    "dateAdded": "2025-03-20T09:56:24.784Z"
-  },
-  {
     "id": "6d215144-8604-4912-aea8-2560a2c71611",
     "title": "Iguazu Falls",
     "category": "Forests",
@@ -92,7 +72,7 @@ export const photos: Photo[] = [
     "image": "/uploads/c1fb53d7-542f-460e-9627-ca1a4ef9f754.jpg",
     "description": "A beautiful sunset over the ancient city",
     "location": "Matera, Italy",
-    "featured": true,
+    "featured": false,
     "dateAdded": "2025-03-20T09:56:24.785Z"
   },
   {
@@ -106,14 +86,34 @@ export const photos: Photo[] = [
     "dateAdded": "2025-03-27T18:19:23.347Z"
   },
   {
-    "id": "1743103090823",
+    "id": "1743159135812",
+    "title": "Wind and Glow",
+    "category": "Night Sky",
+    "image": "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743159043/landscape-photos/jn1mxeiugbwchtfc7tav.jpg",
+    "description": "A time blending of long exposures taken on an incredibly windy spot",
+    "location": "Menetes, Karpathos, Greece",
+    "featured": true,
+    "dateAdded": "2025-03-28T10:52:15.812Z"
+  },
+  {
+    "id": "1743159352224",
+    "title": "Mist and Flowers",
+    "category": "Mountains",
+    "image": "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743159225/landscape-photos/jx0dbxsqcnwuu4e0yniz.jpg",
+    "description": "A shot of a mountain river stream taken during a beautiful hike in the Dolomites, with their ever changing weather",
+    "location": "Cornisello, Dolomites",
+    "featured": true,
+    "dateAdded": "2025-03-28T10:55:52.224Z"
+  },
+  {
+    "id": "1743159500591",
     "title": "Endless Sunset",
     "category": "Mountains",
-    "image": "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743103057/landscape-photos/qxuh5cr4hyjyy1z0ntnw.jpg",
-    "description": "",
-    "location": "Vareid, Lofoten",
+    "image": "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743159407/landscape-photos/s4um6nq3bnqfvgnlam9b.jpg",
+    "description": "This photo almost costed me an elbow. I got so mesmerized by the light and the atmosphere that I failed to notice how slippery the rocks were on this beach. So I fell badly on one of those and to protect my camera I pointed my elbow down. I still feel the pain if I think about it. though a couple of years later I think it was worth it",
+    "location": "Vareid Beach, Lofoten",
     "featured": true,
-    "dateAdded": "2025-03-27T19:18:10.823Z"
+    "dateAdded": "2025-03-28T10:58:20.591Z"
   }
 ];
 
