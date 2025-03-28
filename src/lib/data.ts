@@ -72,7 +72,7 @@ export const photos: Photo[] = [
     "image": "/uploads/ac1d9140-5825-440b-8a0c-221d94a247fa.jpg",
     "description": "Beautiful Greek coastal landscape",
     "location": "Greece",
-    "featured": true,
+    "featured": false,
     "dateAdded": "2025-03-20T09:56:24.784Z"
   },{
     "id": "28b20bbe-a70d-4fc9-8ba0-9d30d6f39a70",
