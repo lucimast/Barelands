@@ -172,9 +172,15 @@ export default function PortfolioSection() {
   // Helper function to apply filters consistently
   const applyFilters = (photos: Photo[], onHomepage: boolean, category: string) => {
     // First filter by homepage status
+    console.log("FILTERING - All photos:", photos.map(p => ({id: p.id.substring(0, 8), title: p.title, featured: p.featured})));
     const filteredByFeatured = onHomepage 
-      ? photos.filter(photo => photo.featured)
+      ? photos.filter(photo => {
+          const isIncluded = photo.featured === true;
+          console.log(`Photo ${photo.title} - featured: ${photo.featured} (${typeof photo.featured}) - included: ${isIncluded}`);
+          return isIncluded;
+        })
       : photos;
+    console.log("FILTERING - Featured photos:", filteredByFeatured.map(p => ({id: p.id.substring(0, 8), title: p.title})));
     
     console.log(`Filtered by featured: ${filteredByFeatured.length} photos`);
     
