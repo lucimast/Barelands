@@ -270,7 +270,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className={`relative rounded-lg overflow-hidden ${isPortrait ? 'aspect-[3/4]' : 'aspect-video'}`}>
+      <div className={`relative rounded-lg overflow-hidden max-w-xs mx-auto w-full h-48 ${isPortrait ? 'aspect-[3/4]' : 'aspect-video'}`}>
         {imageError ? (
           <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
             <p className="text-zinc-500">Image unavailable</p>
@@ -283,6 +283,8 @@ function BlogPostCard({ post }: { post: BlogPost }) {
             className={`${isPortrait ? 'object-contain' : 'object-cover'}`}
             onError={handleImageError}
             unoptimized
+            onContextMenu={(e) => e.preventDefault()}
+            draggable="false"
           />
         )}
       </div>
