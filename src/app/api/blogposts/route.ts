@@ -4,6 +4,9 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { blogPosts, BlogPost } from '@/lib/data';
 
+// Make this route compatible with static export
+export const dynamic = 'force-static';
+
 // Return blogpost data
 export async function GET() {
   try {

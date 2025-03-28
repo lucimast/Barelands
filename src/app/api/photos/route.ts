@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import * as fsSync from 'fs';
 
-// Add static export configuration
+// Add dynamic = 'force-static' at the top of the file, after imports
 export const dynamic = 'force-static';
 
 // Add generateStaticParams for static export

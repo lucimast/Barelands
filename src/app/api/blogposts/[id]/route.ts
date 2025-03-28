@@ -3,6 +3,16 @@ import fs from 'fs';
 import path from 'path';
 import { blogPosts, BlogPost } from '@/lib/data';
 
+// Make this route compatible with static export
+export const dynamic = 'force-static';
+
+// Generate static params for all blog post IDs
+export function generateStaticParams() {
+  return blogPosts.map(post => ({
+    id: post.id,
+  }));
+}
+
 // Get a single blog post
 export async function GET(
   request: Request,
