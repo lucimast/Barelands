@@ -42,7 +42,7 @@ export const photos: Photo[] = [
     "image": "/uploads/0c699b59-09d5-498b-96b1-fee1d146d1a8.jpg",
     "description": "Beautiful landscape photograph of Nara Lanterns",
     "location": "Japan",
-    "featured": false,
+    "featured": true,
     "dateAdded": "2025-03-20T09:56:24.784Z"
   },
   {
