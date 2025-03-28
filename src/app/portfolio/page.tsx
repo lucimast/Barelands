@@ -1,15 +1,9 @@
 "use client";
 
-import { Metadata } from "next";
 import PortfolioSection from "@/components/PortfolioSection";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
-
-export const metadata: Metadata = {
-  title: "Portfolio | Barelands Photography",
-  description: "A collection of my finest landscape photographs from around the world, each capturing a unique moment in time"
-};
 
 export default function PortfolioPage() {
   // Disable right click globally on this page
