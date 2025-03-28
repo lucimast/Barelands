@@ -16,6 +16,40 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
   
+  // Disable right click globally on this page
+  useEffect(() => {
+    const disableRightClick = (e: MouseEvent) => {
+      e.preventDefault();
+      return false;
+    };
+    
+    document.addEventListener('contextmenu', disableRightClick);
+    
+    // Clean up event listener
+    return () => {
+      document.removeEventListener('contextmenu', disableRightClick);
+    };
+  }, []);
+  
+  // Prevent image dragging
+  useEffect(() => {
+    const preventImageDrag = (e: DragEvent) => {
+      e.preventDefault();
+      return false;
+    };
+    
+    // Prevent drag start
+    document.addEventListener('dragstart', preventImageDrag);
+    // Prevent drop
+    document.addEventListener('drop', preventImageDrag);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('dragstart', preventImageDrag);
+      document.removeEventListener('drop', preventImageDrag);
+    };
+  }, []);
+  
   useEffect(() => {
     // Initialize image path
     if (post.coverImage) {
@@ -104,7 +138,14 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
         <div className="mb-6">
           <Link 
             href="/news" 
-            className="inline-flex items-center text-zinc-300 hover:text-white transition-colors"
+            className="inline-flex items-center text-zinc-300 hover:text-white transition-colors pointer-events-auto"
+            onClick={(e) => {
+              // Allow click but prevent default browser actions on right-click
+              if (e.button === 2) {
+                e.preventDefault();
+                return false;
+              }
+            }}
           >
             <ArrowLeft size={16} className="mr-1" />
             Back to News
