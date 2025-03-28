@@ -5,11 +5,26 @@ import { type Photo } from "@/lib/data";
 import { trackEvent } from "@/lib/analytics";
 import { isStaticExport } from "@/lib/static-data";
 
-export default function PhotoItem({ item, selectedPhotoId }: { item: Photo, selectedPhotoId: string | null }) {
+// Extend the Photo type with optional fields that might not be in the type definition
+type ExtendedPhoto = Photo & {
+  date?: string;
+  available?: boolean;
+  dimensions?: string;
+};
+
+export default function PhotoItem({ item, selectedPhotoId }: { item: ExtendedPhoto, selectedPhotoId: string | null }) {
   const [imageError, setImageError] = useState(false);
+  const [dialogImageError, setDialogImageError] = useState(false);
   const [imagePath, setImagePath] = useState<string>(item.image);
   const [isPortrait, setIsPortrait] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Reset dialog image error when dialog opens/closes
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setDialogImageError(false);
+    }
+  }, [isDialogOpen]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -30,12 +45,17 @@ export default function PhotoItem({ item, selectedPhotoId }: { item: Photo, sele
     img.onload = () => {
       setIsPortrait(img.height > img.width);
     };
+    img.onerror = () => {
+      // Make sure we set the error state if preload fails
+      setImageError(true);
+    };
     img.src = item.image;
   }, [item.image]);
   
   useEffect(() => {
     if (isDialogOpen) {
-      trackEvent('photo_viewed', {
+      // Using a type assertion for the analytics event
+      trackEvent('photo_viewed' as any, {
         photo_id: item.id,
         photo_title: item.title,
       });
@@ -73,21 +93,29 @@ export default function PhotoItem({ item, selectedPhotoId }: { item: Photo, sele
           </div>
         </DialogTrigger>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-auto">
-          <div className={`relative ${isPortrait ? 'aspect-[3/4] max-w-lg mx-auto' : 'aspect-video w-full'}`}>
-            <Image
-              src={imagePath}
-              alt={item.title}
-              fill
-              className="object-contain"
-              unoptimized
-              onContextMenu={(e) => e.preventDefault()}
-              draggable="false"
-            />
+          <div className={`relative ${isPortrait ? 'aspect-[3/4]' : 'aspect-[4/3]'} w-full max-w-2xl mx-auto`}>
+            {dialogImageError || imageError ? (
+              <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
+                <p className="text-zinc-500">Image unavailable</p>
+              </div>
+            ) : (
+              <Image
+                src={imagePath}
+                alt={item.title}
+                fill
+                className="object-contain"
+                onError={() => setDialogImageError(true)}
+                unoptimized
+                onContextMenu={(e) => e.preventDefault()}
+                draggable="false"
+                priority
+              />
+            )}
           </div>
           <div className="mt-4">
             <h2 className="text-2xl font-bold">{item.title}</h2>
-            <p className="text-zinc-400 mt-1">{item.location} • {item.date}</p>
-            <p className="mt-3">{item.description}</p>
+            <p className="text-zinc-400 mt-1">{item.location}{item.date ? ` • ${item.date}` : ''}</p>
+            {item.description && <p className="mt-3">{item.description}</p>}
             
             {item.available && (
               <div className="mt-4 flex items-center justify-between">
@@ -95,7 +123,7 @@ export default function PhotoItem({ item, selectedPhotoId }: { item: Photo, sele
                   href={`/prints?photo=${item.id}`}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-medium text-white transition-colors"
                   onClick={() => {
-                    trackEvent('buy_print_click', {
+                    trackEvent('buy_print_click' as any, {
                       photo_id: item.id,
                       photo_title: item.title,
                     });
@@ -103,7 +131,7 @@ export default function PhotoItem({ item, selectedPhotoId }: { item: Photo, sele
                 >
                   Buy a Print
                 </a>
-                <span className="text-sm text-zinc-400">Dimensions: {item.dimensions}</span>
+                {item.dimensions && <span className="text-sm text-zinc-400">Dimensions: {item.dimensions}</span>}
               </div>
             )}
           </div>
