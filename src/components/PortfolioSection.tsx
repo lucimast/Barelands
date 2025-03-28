@@ -198,6 +198,17 @@ export default function PortfolioSection() {
     }
   };
 
+  // Effect to log filteredItems when they change
+  useEffect(() => {
+    if (filteredItems.length > 0) {
+      console.log("RENDERING - Photos that will be displayed:", filteredItems.map(item => ({
+        id: item.id,
+        title: item.title,
+        featured: item.featured
+      })));
+    }
+  }, [filteredItems]);
+
   // Handle category change without fetching data again
   const handleCategoryChange = (category: string) => {
     console.log(`Category changed to: ${category}, refiltering photos from ${allPhotos.length} items`);
