@@ -139,7 +139,7 @@ export const photos: Photo[] = [
 
 // Blog posts array to store blog content
 export const blogPosts: BlogPost[] = [
-  {
+{
     id: "iceland-photography",
     title: "Iceland: A Photographer's Paradise",
     excerpt: "With its dramatic waterfalls, volcanic landscapes, and ethereal light, Iceland offers endless opportunities for landscape photographers.",
@@ -254,7 +254,17 @@ I'll never forget watching the alpenglow illuminate the mountains while the wind
     relatedPhotoId: "4c5239b2-a9be-4bca-9f06-840dbd6fc05e",
     date: "2024-02-10",
     author: "Barelands"
-  }
+  },
+  {
+  id: "1743178665112",
+  title: "An evening in Hamnoy",
+  excerpt: "A memorable journey to Lofoten's most charming village",
+  content: "Hamnoy is arguably the most charming village in Lofoten. Spending an evening there admiring the infinite sunset was a delight. Right beside the bridge that links it to neighbouring villages, I found these beautiful flowers. What better could I ask for as a foreground? A shame there were no clouds in the sky, but, hey, who can complain about such a beautiful day?\n\n",
+  coverImage: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743178621/h1ykzlzqbkoib8zdaqnm.jpg",
+  relatedPhotoId: "1743099563347",
+  date: "2025-03-28T16:17:45.112Z",
+  author: "@mybarelands"
+}
 ];
 
 export type AboutInfo = {
