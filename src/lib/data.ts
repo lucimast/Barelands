@@ -264,6 +264,15 @@ I'll never forget watching the alpenglow illuminate the mountains while the wind
   relatedPhotoId: "1743099563347",
   date: "2025-03-28T16:17:45.112Z",
   author: "@mybarelands"
+},
+  {
+  id: "1743184551767",
+  title: "Iceland I miss you",
+  excerpt: "Remembering my trip to Iceland two years ago",
+  content: "Title: South Iceland: Where the Earth Breathes Beauty\n\nTwo years ago, I found myself standing on the edge of the world, or at least, that is how it felt. The southern coast of Iceland, with its raw, unfiltered beauty, is the kind of place that doesn't just ask for your attention, it demands it.\n\nAfter landing in Reykjavik, I traced the Ring Road southward, where glaciers meet black sand, waterfalls tumble from basalt cliffs, and the light has a mind of its own.\n\nAt Vik, I stood before Reynisfjara Beach, where the Atlantic crashes into jet black shores. The sea stacks loomed offshore like ancient watchmen, their dark silhouettes cut sharply against a pale sky. I arrived early, before the tour buses, before the sun. Just me, the wind, and the sound of waves rolling stones like distant thunder. I set up my tripod behind a natural basalt alcove and waited. When the sky finally lit with that elusive Icelandic pink and gold, the rocks glowed as if from within. It wasn't dramatic. It was subtle. And that made it unforgettable.\n\nFurther east, I spent a dusk hour at Jokulsarlon, the glacial lagoon. Icebergs floated silently past like sleeping giants. One broke apart in front of me, a slow motion crash that sent ripples through the mirrored water. Seals appeared, curious but cautious. I remember holding my breath as I clicked the shutter. Not because of the shot, but because some moments feel too sacred for sound.\n\nThe southern coast isn't postcard pretty. It is wilder than that. It shifts. It hums. And it reminds you that the world is still capable of surprising us, if we're willing to watch, wait, and witness.\n\nI didn't come home with perfect photos. But I came back with something better: images that feel. And in the end, that's what landscape photography is really about.",
+  coverImage: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743184274/x82trmk7i9vy6pqnol2o.jpg",
+  date: "2025-03-28T17:55:51.767Z",
+  author: "@mybarelands"
 }
 ];
 
