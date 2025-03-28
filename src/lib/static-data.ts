@@ -8,6 +8,8 @@ import { photos as defaultPhotos, Photo } from '@/lib/data';
  * This function mimics the API behavior but works in static exports
  */
 export async function getStaticPhotoData(): Promise<Photo[]> {
+  console.log("Getting static photo data with featured flags:", 
+    defaultPhotos.map(p => ({ id: p.id, title: p.title, featured: p.featured })));
   return [...defaultPhotos]; // Return a copy of the photos array
 }
 
@@ -27,6 +29,7 @@ export async function getStaticSlideshowPhotos(): Promise<Photo[]> {
   
   // If we have specific photos, return them
   if (specificPhotos.length > 0) {
+    console.log("Using specific slideshow photos:", specificPhotos.map(p => p.title));
     return specificPhotos;
   }
   
@@ -36,10 +39,12 @@ export async function getStaticSlideshowPhotos(): Promise<Photo[]> {
     .slice(0, 3);
   
   if (featuredPhotos.length > 0) {
+    console.log("Using featured slideshow photos:", featuredPhotos.map(p => p.title));
     return featuredPhotos;
   }
   
   // Final fallback: first 3 photos
+  console.log("Using first 3 photos for slideshow");
   return defaultPhotos.slice(0, Math.min(3, defaultPhotos.length));
 }
 

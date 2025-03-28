@@ -141,15 +141,11 @@ export default function PortfolioSection() {
         
         console.log(`Photos to display: ${photosToDisplay.length}, isHomepage: ${isHomepage}`);
         
-        // Set allPhotos first
-        setAllPhotos(photosToDisplay);
+        // Set allPhotos first - store ALL photos for client-side filtering
+        setAllPhotos(validPhotos);
         
-        // Then apply initial category filter
-        if (activeCategory === "All") {
-          setFilteredItems(photosToDisplay);
-        } else {
-          setFilteredItems(photosToDisplay.filter(photo => photo.category === activeCategory));
-        }
+        // Then apply filtering based on homepage status and category
+        applyFilters(validPhotos, isHomepage, activeCategory);
         
         setError(null);
         photosLoadedRef.current = true;
@@ -163,7 +159,34 @@ export default function PortfolioSection() {
     };
 
     fetchPhotos();
-  }, [isHomepage, isStatic, activeCategory]);
+  }, [isStatic, activeCategory]);
+
+  // Separate effect to handle homepage status changes
+  useEffect(() => {
+    if (allPhotos.length > 0) {
+      console.log(`Homepage status changed to: ${isHomepage}, refiltering photos`);
+      applyFilters(allPhotos, isHomepage, activeCategory);
+    }
+  }, [isHomepage, activeCategory]);
+
+  // Helper function to apply filters consistently
+  const applyFilters = (photos: Photo[], onHomepage: boolean, category: string) => {
+    // First filter by homepage status
+    const filteredByFeatured = onHomepage 
+      ? photos.filter(photo => photo.featured)
+      : photos;
+    
+    console.log(`Filtered by featured: ${filteredByFeatured.length} photos`);
+    
+    // Then filter by category
+    if (category === "All") {
+      setFilteredItems(filteredByFeatured);
+    } else {
+      const filtered = filteredByFeatured.filter(photo => photo.category === category);
+      console.log(`Filtered by category "${category}": ${filtered.length} photos`);
+      setFilteredItems(filtered);
+    }
+  };
 
   // Handle category change without fetching data again
   const handleCategoryChange = (category: string) => {
@@ -176,14 +199,8 @@ export default function PortfolioSection() {
       return;
     }
     
-    // Apply category filter
-    if (category === "All") {
-      setFilteredItems(allPhotos);
-    } else {
-      const filtered = allPhotos.filter(photo => photo.category === category);
-      console.log(`Filtered to ${filtered.length} photos for category: ${category}`);
-      setFilteredItems(filtered);
-    }
+    // Apply filters
+    applyFilters(allPhotos, isHomepage, category);
     
     // Track category filter event
     trackEvent('category_filter', { category });

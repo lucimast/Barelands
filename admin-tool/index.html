@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landscape Photography Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <header class="mb-8 text-center">
+      <h1 class="text-3xl font-bold mb-2">Landscape Photography Admin</h1>
+      <p class="text-gray-400">Manage your photos and content</p>
+    </header>
+
+    <main class="max-w-3xl mx-auto">
+      <!-- GitHub Token Section -->
+      <section class="bg-gray-800 rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4">GitHub Configuration</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300">GitHub Personal Access Token</label>
+            <input type="password" id="github-token" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white" placeholder="Enter your GitHub token">
+            <p class="mt-1 text-sm text-gray-400">Required for updating the repository. This will be saved securely in your browser.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Photo Upload Section -->
+      <section class="bg-gray-800 rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4">Upload New Photo</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div id="upload-preview" class="h-64 bg-gray-700 rounded-lg flex items-center justify-center mb-4">
+              <p id="preview-placeholder" class="text-gray-400">Photo preview will appear here</p>
+              <img id="preview-image" class="h-full w-full object-contain hidden" src="" alt="Preview">
+            </div>
+            
+            <form id="upload-form" class="mb-4">
+              <label class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-center cursor-pointer">
+                Select Photo
+                <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" class="hidden">
+              </label>
+            </form>
+            
+            <div id="upload-progress" class="hidden">
+              <div class="w-full bg-gray-700 rounded-full h-2.5 mb-2">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+              </div>
+              <p id="progress-text" class="text-sm text-gray-400 text-center">0%</p>
+            </div>
+          </div>
+
+          <div>
+            <form id="photo-form" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Title</label>
+                <input type="text" id="title" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Category</label>
+                <select id="category" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white">
+                  <option value="">Select a category</option>
+                  <option value="Mountains">Mountains</option>
+                  <option value="Deserts">Deserts</option>
+                  <option value="Forests">Forests</option>
+                  <option value="Oceans">Oceans</option>
+                  <option value="Night Sky">Night Sky</option>
+                  <option value="Italy">Italy</option>
+                  <option value="Travel">Travel</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Location</label>
+                <input type="text" id="location" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-300">Description</label>
+                <textarea id="description" rows="2" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"></textarea>
+              </div>
+              
+              <div class="flex items-center">
+                <input type="checkbox" id="featured" class="rounded bg-gray-700 border-gray-600 text-blue-600">
+                <label for="featured" class="ml-2 text-sm text-gray-300">Feature on homepage</label>
+              </div>
+              
+              <input type="hidden" id="image-url">
+            </form>
+          </div>
+        </div>
+        
+        <div class="mt-6">
+          <button id="save-button" disabled class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded opacity-50 cursor-not-allowed">
+            Save Photo
+          </button>
+        </div>
+      </section>
+
+      <!-- Photo Management Section -->
+      <section class="bg-gray-800 rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4">Manage Photos</h2>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center mb-4">
+            <button id="refresh-photos" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+              <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh Photos
+            </button>
+          </div>
+          
+          <div id="photos-list" class="space-y-4">
+            <!-- Photos will be loaded here -->
+            <div class="text-center text-gray-400">Loading photos...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Instructions Section -->
+      <section class="bg-gray-800 rounded-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">How to Use This Tool</h2>
+        
+        <div class="prose prose-invert">
+          <ol class="list-decimal list-inside space-y-2">
+            <li>Enter your GitHub Personal Access Token above (required only once)</li>
+            <li>Click "Select Photo" to choose an image from your computer</li>
+            <li>Fill in the photo details (title, category, location, etc.)</li>
+            <li>Click "Save Photo" to upload the data</li>
+            <li>The photo will be added to your site's data</li>
+            <li>The photo will appear on your site after the next GitHub build</li>
+          </ol>
+          
+          <div class="mt-4 p-4 bg-gray-700 rounded-lg">
+            <p class="text-yellow-400 font-medium">Important Note:</p>
+            <p class="text-sm text-gray-300 mt-1">
+              This admin tool uses Cloudinary for image storage and GitHub's API to update your site data.
+              Your GitHub token is stored securely in your browser and is required for updating the repository.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Debug Log Section -->
+    <div class="max-w-3xl mx-auto mt-8">
+      <details>
+        <summary class="cursor-pointer text-gray-400 hover:text-white">Debug Log</summary>
+        <div id="debug-log" class="mt-2 p-4 bg-gray-800 rounded text-sm font-mono h-48 overflow-y-auto"></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- Status message -->
+  <div id="status-message" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg hidden"></div>
+
+  <script>
+    // Configuration
+    const config = {
+      cloudName: 'dnafz7ugo',
+      uploadPreset: 'landscape_photos',
+      cloudinaryUrl: 'https://api.cloudinary.com/v1_1/dnafz7ugo/image/upload',
+      githubRepo: 'lucimast/Barelands',
+      githubBranch: 'main',
+      dataPath: 'src/lib/data.ts'
+    };
+
+    // Debug logging
+    function debugLog(message) {
+      const logEl = document.getElementById('debug-log');
+      const time = new Date().toISOString().substring(11, 19);
+      logEl.innerHTML += `<div>[${time}] ${message}</div>`;
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(`[DEBUG] ${message}`);
+    }
+
+    // Show status message
+    function showStatus(message, type) {
+      debugLog(`Status: ${type} - ${message}`);
+      
+      const statusEl = document.getElementById('status-message');
+      statusEl.textContent = message;
+      statusEl.classList.remove('hidden', 'bg-green-600', 'bg-red-600', 'bg-blue-600');
+      
+      switch (type) {
+        case 'success':
+          statusEl.classList.add('bg-green-600');
+          break;
+        case 'error':
+          statusEl.classList.add('bg-red-600');
+          break;
+        default:
+          statusEl.classList.add('bg-blue-600');
+      }
+      
+      statusEl.classList.remove('hidden');
+      
+      setTimeout(() => {
+        statusEl.classList.add('hidden');
+      }, 5000);
+    }
+
+    // Generate a unique ID
+    function generateId() {
+      return Date.now().toString();
+    }
+
+    // Load photos from GitHub
+    async function loadPhotos() {
+      const githubToken = localStorage.getItem('githubToken');
+      if (!githubToken) {
+        showStatus('Please enter your GitHub token first', 'error');
+        return;
+      }
+
+      debugLog('Loading photos from GitHub...');
+      const photosList = document.getElementById('photos-list');
+      photosList.innerHTML = '<div class="text-center text-gray-400">Loading photos...</div>';
+
+      try {
+        const response = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}?ref=${config.githubBranch}`, {
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`GitHub API error: ${response.status}`);
+        }
+
+        const dataFile = await response.json();
+        const content = atob(dataFile.content);
+        
+        // Extract photos array from the TypeScript file
+        const photoArrayMatch = content.match(/export const photos: Photo\[\] = \[([\s\S]*?)\];/);
+        if (!photoArrayMatch) {
+          throw new Error('Could not find photos array in data file');
+        }
+
+        // Parse the photos array
+        const photosStr = photoArrayMatch[1].trim();
+        const photos = photosStr ? photosStr.split('},').map(photo => {
+          // Add back the closing brace if it was removed by the split
+          const obj = photo.trim() + (photo.trim().endsWith('}') ? '' : '}');
+          try {
+            // First try parsing as is (for JSON format)
+            return JSON.parse(obj);
+          } catch (e) {
+            try {
+              // If that fails, try converting TypeScript format to JSON
+              const jsonStr = obj.replace(/([{,]\s*)(\w+):/g, '$1"$2":');
+              return JSON.parse(jsonStr);
+            } catch (e2) {
+              debugLog(`Error parsing photo: ${obj}`);
+              debugLog(`Parse error: ${e2.message}`);
+              return null;
+            }
+          }
+        }).filter(Boolean) : [];
+
+        // Render photos
+        photosList.innerHTML = photos.length === 0 
+          ? '<div class="text-center text-gray-400">No photos found</div>'
+          : photos.map(photo => `
+            <div class="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <img src="${photo.image}" alt="${photo.title}" class="w-16 h-16 object-cover rounded">
+                <div>
+                  <h3 class="font-medium">${photo.title}</h3>
+                  <p class="text-sm text-gray-400">${photo.category}</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-4">
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" 
+                    class="rounded bg-gray-600 border-gray-500 text-blue-600"
+                    ${photo.featured ? 'checked' : ''}
+                    onchange="toggleFeatured('${photo.id}', this.checked)">
+                  <span class="text-sm text-gray-300">Featured</span>
+                </label>
+                <button onclick="deletePhoto('${photo.id}')" 
+                  class="text-red-400 hover:text-red-300">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          `).join('');
+
+        debugLog(`Loaded ${photos.length} photos successfully`);
+      } catch (error) {
+        debugLog(`Error loading photos: ${error.message}`);
+        photosList.innerHTML = `<div class="text-center text-red-400">Error loading photos: ${error.message}</div>`;
+      }
+    }
+
+    // Toggle featured status
+    async function toggleFeatured(photoId, isFeatured) {
+      const githubToken = localStorage.getItem('githubToken');
+      if (!githubToken) {
+        showStatus('Please enter your GitHub token first', 'error');
+        return;
+      }
+
+      debugLog(`Toggling featured status for photo ${photoId} to ${isFeatured}`);
+
+      try {
+        // Get current data
+        const response = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}?ref=${config.githubBranch}`, {
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`GitHub API error: ${response.status}`);
+        }
+
+        const dataFile = await response.json();
+        const content = atob(dataFile.content);
+
+        // Check if the content already has the desired featured status
+        const currentFeaturedPattern = isFeatured 
+          ? new RegExp(`id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?featured\\s*:\\s*true`, 'g')
+          : new RegExp(`id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?featured\\s*:\\s*false`, 'g');
+          
+        if (currentFeaturedPattern.test(content)) {
+          debugLog(`Photo ${photoId} already has featured=${isFeatured}, no update needed`);
+          showStatus(`No change needed - photo is already ${isFeatured ? 'featured' : 'not featured'}`, 'success');
+          return;
+        }
+
+        // Update the featured status
+        const updatedContent = content.replace(
+          new RegExp(`(\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?["']?featured["']?\\s*:\\s*)false`, 'g'),
+          `$1${isFeatured}`
+        ).replace(
+          new RegExp(`(\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?["']?featured["']?\\s*:\\s*)true`, 'g'),
+          `$1${isFeatured}`
+        ).replace(
+          new RegExp(`(\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?featured\\s*:\\s*)false`, 'g'),
+          `$1${isFeatured}`
+        ).replace(
+          new RegExp(`(\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?featured\\s*:\\s*)true`, 'g'),
+          `$1${isFeatured}`
+        );
+
+        // Check if content was actually changed
+        if (updatedContent === content) {
+          debugLog(`No changes made to content for photo ${photoId}`);
+          showStatus('Unable to update featured status - photo not found or format not recognized', 'error');
+          return;
+        }
+
+        // Commit the changes
+        let updateResponse = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Update featured status for photo ${photoId}`,
+            content: btoa(updatedContent),
+            sha: dataFile.sha,
+            branch: config.githubBranch
+          })
+        });
+
+        // Handle 409 Conflict by retrying with latest version
+        if (updateResponse.status === 409) {
+          debugLog('Conflict detected (409), retrying with latest file version');
+          
+          // Fetch the latest version
+          const retryResponse = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}?ref=${config.githubBranch}`, {
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+          
+          if (!retryResponse.ok) {
+            throw new Error(`GitHub API error on retry: ${retryResponse.status}`);
+          }
+          
+          const retryDataFile = await retryResponse.json();
+          const retryContent = atob(retryDataFile.content);
+          
+          // Apply the same changes to the latest content
+          const retryUpdatedContent = retryContent.replace(
+            new RegExp(`(\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?["']?featured["']?\\s*:\\s*)false`, 'g'),
+            `$1${isFeatured}`
+          ).replace(
+            new RegExp(`(\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?["']?featured["']?\\s*:\\s*)true`, 'g'),
+            `$1${isFeatured}`
+          ).replace(
+            new RegExp(`(\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?featured\\s*:\\s*)false`, 'g'),
+            `$1${isFeatured}`
+          ).replace(
+            new RegExp(`(\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?featured\\s*:\\s*)true`, 'g'),
+            `$1${isFeatured}`
+          );
+          
+          // Retry the update with the latest SHA
+          updateResponse = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: `Update featured status for photo ${photoId}`,
+              content: btoa(retryUpdatedContent),
+              sha: retryDataFile.sha,
+              branch: config.githubBranch
+            })
+          });
+        }
+
+        if (!updateResponse.ok) {
+          const errorData = await updateResponse.json();
+          throw new Error(`Failed to update photo: ${updateResponse.status}${errorData.message ? ' - ' + errorData.message : ''}`);
+        }
+
+        showStatus(`Featured status updated successfully. Changes will appear on the site after GitHub Pages rebuilds (typically 1-2 minutes).`, 'success');
+        
+        // Wait a moment before refreshing the list to allow GitHub to process the change
+        setTimeout(() => {
+          loadPhotos(); // Refresh the list
+        }, 2000);
+      } catch (error) {
+        debugLog(`Error updating featured status: ${error.message}`);
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    // Delete photo
+    async function deletePhoto(photoId) {
+      if (!confirm('Are you sure you want to delete this photo? This action cannot be undone.')) {
+        return;
+      }
+
+      const githubToken = localStorage.getItem('githubToken');
+      if (!githubToken) {
+        showStatus('Please enter your GitHub token first', 'error');
+        return;
+      }
+
+      debugLog(`Deleting photo ${photoId}`);
+
+      try {
+        // Get current data
+        const response = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}?ref=${config.githubBranch}`, {
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`GitHub API error: ${response.status}`);
+        }
+
+        const dataFile = await response.json();
+        const content = atob(dataFile.content);
+
+        // Check if photo exists in content
+        const photoPattern = new RegExp(`\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?`);
+        if (!photoPattern.test(content)) {
+          debugLog(`Photo ${photoId} not found in content`);
+          showStatus('Photo not found in data file. It may have been already deleted.', 'error');
+          return;
+        }
+
+        // Remove the photo from the array
+        const updatedContent = content.replace(
+          new RegExp(`\\s*\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?\\}\\s*,?\\s*`, 'g'),
+          ''
+        );
+
+        // Check if content was actually changed
+        if (updatedContent === content) {
+          debugLog(`No changes made to content for photo ${photoId}`);
+          showStatus('Unable to delete photo - format not recognized', 'error');
+          return;
+        }
+
+        // Commit the changes
+        let updateResponse = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Delete photo ${photoId}`,
+            content: btoa(updatedContent),
+            sha: dataFile.sha,
+            branch: config.githubBranch
+          })
+        });
+
+        // Handle 409 Conflict by retrying with latest version
+        if (updateResponse.status === 409) {
+          debugLog('Conflict detected (409), retrying with latest file version');
+          
+          // Fetch the latest version
+          const retryResponse = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}?ref=${config.githubBranch}`, {
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+          
+          if (!retryResponse.ok) {
+            throw new Error(`GitHub API error on retry: ${retryResponse.status}`);
+          }
+          
+          const retryDataFile = await retryResponse.json();
+          const retryContent = atob(retryDataFile.content);
+          
+          // Apply the same changes to the latest content
+          const retryUpdatedContent = retryContent.replace(
+            new RegExp(`\\s*\\{\\s*["']?id["']?\\s*:\\s*["']?${photoId.replace(/[-]/g, '\\-')}["']?[^}]*?\\}\\s*,?\\s*`, 'g'),
+            ''
+          );
+          
+          // Retry the update with the latest SHA
+          updateResponse = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: `Delete photo ${photoId}`,
+              content: btoa(retryUpdatedContent),
+              sha: retryDataFile.sha,
+              branch: config.githubBranch
+            })
+          });
+        }
+
+        if (!updateResponse.ok) {
+          const errorData = await updateResponse.json();
+          throw new Error(`Failed to delete photo: ${updateResponse.status}${errorData.message ? ' - ' + errorData.message : ''}`);
+        }
+
+        showStatus('Photo deleted successfully. Changes will appear on the site after GitHub Pages rebuilds (typically 1-2 minutes).', 'success');
+        
+        // Wait a moment before refreshing the list to allow GitHub to process the change
+        setTimeout(() => {
+          loadPhotos(); // Refresh the list
+        }, 2000);
+      } catch (error) {
+        debugLog(`Error deleting photo: ${error.message}`);
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    // Upload file to Cloudinary
+    async function uploadToCloudinary(file) {
+      debugLog(`Uploading file to Cloudinary: ${file.name} (${Math.round(file.size / 1024)} KB)`);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', config.uploadPreset);
+      formData.append('folder', 'landscape-photos');
+      
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('progress-text');
+      document.getElementById('upload-progress').classList.remove('hidden');
+      
+      try {
+        const xhr = new XMLHttpRequest();
+        
+        // Set up progress tracking
+        xhr.upload.addEventListener('progress', function(e) {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percentComplete + '%';
+            progressText.textContent = percentComplete + '%';
+            debugLog(`Upload progress: ${percentComplete}%`);
+          }
+        });
+        
+        // Create a promise to handle the response
+        const uploadPromise = new Promise((resolve, reject) => {
+          xhr.onload = function() {
+            if (this.status >= 200 && this.status < 300) {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response);
+            } else {
+              reject({
+                status: this.status,
+                statusText: xhr.statusText
+              });
+            }
+          };
+          xhr.onerror = function() {
+            reject({
+              status: this.status,
+              statusText: xhr.statusText
+            });
+          };
+        });
+        
+        xhr.open('POST', config.cloudinaryUrl, true);
+        xhr.send(formData);
+        
+        const response = await uploadPromise;
+        debugLog(`Upload successful: ${response.secure_url}`);
+        
+        // Update UI with the image
+        document.getElementById('image-url').value = response.secure_url;
+        document.getElementById('preview-placeholder').classList.add('hidden');
+        document.getElementById('preview-image').src = response.secure_url;
+        document.getElementById('preview-image').classList.remove('hidden');
+        document.getElementById('save-button').disabled = false;
+        document.getElementById('save-button').classList.remove('opacity-50', 'cursor-not-allowed');
+        
+        showStatus('Photo uploaded successfully!', 'success');
+        return response.secure_url;
+        
+      } catch (error) {
+        debugLog(`Upload error: ${JSON.stringify(error)}`);
+        showStatus(`Upload failed: ${error.statusText || 'Unknown error'}`, 'error');
+        throw error;
+      } finally {
+        // Hide progress bar after a short delay
+        setTimeout(() => {
+          document.getElementById('upload-progress').classList.add('hidden');
+        }, 1000);
+      }
+    }
+
+    // Save photo data
+    async function savePhotoData() {
+      const githubToken = localStorage.getItem('githubToken');
+      if (!githubToken) {
+        showStatus('Please enter your GitHub token first', 'error');
+        return;
+      }
+
+      const title = document.getElementById('title').value;
+      const category = document.getElementById('category').value;
+      const location = document.getElementById('location').value;
+      const description = document.getElementById('description').value;
+      const featured = document.getElementById('featured').checked;
+      const imageUrl = document.getElementById('image-url').value;
+
+      if (!title || !category || !location || !imageUrl) {
+        showStatus('Please fill in all required fields', 'error');
+        return;
+      }
+
+      const photoData = {
+        id: generateId(),
+        title,
+        category,
+        image: imageUrl,
+        description,
+        location,
+        featured,
+        dateAdded: new Date().toISOString()
+      };
+
+      debugLog(`Saving photo: ${JSON.stringify(photoData)}`);
+      showStatus('Saving photo data...', 'info');
+
+      try {
+        // Fetch the current data
+        debugLog(`Fetching data file from GitHub: ${config.dataPath}`);
+        const dataResp = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}?ref=${config.githubBranch}`, {
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (!dataResp.ok) {
+          const errorText = await dataResp.text();
+          debugLog(`GitHub API error: ${dataResp.status} - ${errorText}`);
+          throw new Error(`GitHub API error: ${dataResp.status}`);
+        }
+        
+        const dataFile = await dataResp.json();
+        const content = atob(dataFile.content);
+        debugLog('Data file fetched successfully');
+        
+        // Parse the existing data to find the photos array
+        const photoArrayMatch = content.match(/export const photos: Photo\[\] = \[([\s\S]*?)\];/);
+        
+        if (!photoArrayMatch) {
+          debugLog('Could not find photos array in data file');
+          throw new Error('Could not find photos array in data file');
+        }
+        
+        // Create new photo entry
+        const photoJson = JSON.stringify(photoData, null, 2)
+          .replace(/"([^"]+)":/g, '$1:'); // Convert to TypeScript object format
+        
+        // Add the new photo to the array
+        const existingPhotos = photoArrayMatch[1].trim();
+        const hasPhotos = existingPhotos.length > 0;
+        const newPhotosSection = hasPhotos 
+          ? `${existingPhotos},\n  ${photoJson}`
+          : `  ${photoJson}`;
+          
+        // Replace the photos array in the content
+        const newContent = content.replace(
+          /export const photos: Photo\[\] = \[([\s\S]*?)\];/,
+          `export const photos: Photo[] = [\n${newPhotosSection}\n];`
+        );
+        
+        // Commit the updated file
+        debugLog('Committing updated data file to GitHub');
+        const updateResp = await fetch(`https://api.github.com/repos/${config.githubRepo}/contents/${config.dataPath}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Add new photo: ${title}`,
+            content: btoa(newContent),
+            sha: dataFile.sha,
+            branch: config.githubBranch
+          })
+        });
+        
+        if (!updateResp.ok) {
+          const errorText = await updateResp.text();
+          debugLog(`Failed to update data file: ${updateResp.status} - ${errorText}`);
+          throw new Error(`Failed to update data file: ${updateResp.status}`);
+        }
+        
+        debugLog('Photo saved successfully!');
+        showStatus('Photo saved successfully!', 'success');
+        
+        // Reset the form
+        document.getElementById('photo-form').reset();
+        document.getElementById('preview-image').classList.add('hidden');
+        document.getElementById('preview-placeholder').classList.remove('hidden');
+        document.getElementById('save-button').disabled = true;
+        document.getElementById('save-button').classList.add('opacity-50', 'cursor-not-allowed');
+        document.getElementById('file-input').value = '';
+        
+      } catch (error) {
+        debugLog(`Error saving photo: ${error.message}`);
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    // Handle file selection preview
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      debugLog(`File selected: ${file.name} (${Math.round(file.size / 1024)} KB)`);
+      
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('preview-placeholder').classList.add('hidden');
+        document.getElementById('preview-image').src = e.target.result;
+        document.getElementById('preview-image').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+      
+      // Upload to Cloudinary
+      uploadToCloudinary(file).catch(error => {
+        debugLog(`Upload error: ${error}`);
+      });
+    }
+
+    // Handle GitHub token input
+    function handleGitHubTokenInput(event) {
+      const token = event.target.value.trim();
+      if (token) {
+        localStorage.setItem('githubToken', token);
+        showStatus('GitHub token saved successfully', 'success');
+        event.target.value = ''; // Clear the input
+        event.target.disabled = true; // Disable the input
+        event.target.placeholder = 'GitHub token saved';
+      }
+    }
+
+    // Document ready function
+    document.addEventListener('DOMContentLoaded', function() {
+      debugLog('DOM loaded, initializing admin tool');
+      
+      // Check for existing GitHub token
+      const githubToken = localStorage.getItem('githubToken');
+      const tokenInput = document.getElementById('github-token');
+      if (githubToken) {
+        tokenInput.value = '';
+        tokenInput.disabled = true;
+        tokenInput.placeholder = 'GitHub token saved';
+        debugLog('Using saved GitHub token');
+      }
+      
+      // Setup file input
+      document.getElementById('file-input').addEventListener('change', handleFileSelect);
+      
+      // Setup GitHub token input
+      tokenInput.addEventListener('change', handleGitHubTokenInput);
+      
+      // Save button
+      document.getElementById('save-button').addEventListener('click', savePhotoData);
+      
+      // Load photos
+      loadPhotos();
+      
+      // Refresh photos button
+      document.getElementById('refresh-photos').addEventListener('click', loadPhotos);
+    });
+  </script>
+</body>
+</html>
