@@ -72,7 +72,18 @@ export const photos: Photo[] = [
   location: "Lofoten, Norway",
   featured: true,
   dateAdded: "2025-03-27T18:19:23.347Z"
-},];
+},,
+  {
+  id: "1743159135812",
+  title: "Wind and Glow",
+  category: "Night Sky",
+  image: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743159043/landscape-photos/jn1mxeiugbwchtfc7tav.jpg",
+  description: "A time blending of long exposures taken on an incredibly windy spot",
+  location: "Menetes, Karpathos, Greece",
+  featured: true,
+  dateAdded: "2025-03-28T10:52:15.812Z"
+}
+];
 
 export type AboutInfo = {
   name: string;
