@@ -103,18 +103,7 @@ export const photos: Photo[] = [
   location: "Lofoten, Norway",
   featured: true,
   dateAdded: "2025-03-27T18:19:23.347Z"
-},
-  {
-  id: "1743103090823",
-  title: "Endless Sunset",
-  category: "Mountains",
-  image: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743103057/landscape-photos/qxuh5cr4hyjyy1z0ntnw.jpg",
-  description: "",
-  location: "Vareid, Lofoten",
-  featured: true,
-  dateAdded: "2025-03-27T19:18:10.823Z"
-}
-];
+},];
 
 export type AboutInfo = {
   name: string;
