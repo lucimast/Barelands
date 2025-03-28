@@ -64,7 +64,12 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
       
       return (
         <div className="my-6 relative">
-          <img src={imageSrc} alt={alt} className="rounded-lg w-full" />
+          <img 
+            src={imageSrc} 
+            alt={alt} 
+            className="rounded-lg w-full" 
+            onContextMenu={(e) => e.preventDefault()}
+          />
         </div>
       );
     },
@@ -108,13 +113,14 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
         
         <article className="max-w-4xl mx-auto bg-zinc-900 rounded-lg overflow-hidden shadow-lg">
           {imagePath && isLoaded && (
-            <div className={`relative ${isPortrait ? 'h-[32rem] md:h-[40rem] max-w-md mx-auto' : 'h-64 md:h-96 w-full'}`}>
+            <div className={`relative ${isPortrait ? 'h-[24rem] md:h-[30rem] max-w-sm mx-auto' : 'h-48 md:h-72 w-full'}`}>
               <Image
                 src={imagePath}
                 alt={post.title}
                 fill
                 className={`${isPortrait ? 'object-contain' : 'object-cover'}`}
                 unoptimized
+                onContextMenu={(e) => e.preventDefault()}
               />
             </div>
           )}

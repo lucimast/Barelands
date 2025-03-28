@@ -219,6 +219,7 @@ export default function BlogPostForm({
                   src={previewImage}
                   alt="Cover preview"
                   className="w-full h-48 object-cover rounded-md"
+                  onContextMenu={(e) => e.preventDefault()}
                 />
                 <button
                   type="button"
