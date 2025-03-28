@@ -52,7 +52,7 @@ export const photos: Photo[] = [
     "image": "/uploads/4ac52a48-ce6b-4c41-be3d-8175fac59611.jpg",
     "description": "Beautiful landscape photograph of the Dolomites",
     "location": "Dolomites, Italy",
-    "featured": false,
+    "featured": true,
     "dateAdded": "2025-03-20T09:56:24.784Z"
   },
   {
