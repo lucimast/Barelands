@@ -14,11 +14,21 @@ import { Components } from 'react-markdown';
 export default function BlogPostClient({ post }: { post: BlogPost }) {
   const [imagePath, setImagePath] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
   
   useEffect(() => {
     // Initialize image path
     if (post.coverImage) {
       setImagePath(post.coverImage);
+      
+      // Check if image is portrait using a type-safe approach
+      if (typeof window !== 'undefined') {
+        const img = document.createElement('img');
+        img.onload = () => {
+          setIsPortrait(img.height > img.width);
+        };
+        img.src = post.coverImage;
+      }
     }
     
     // Fix image paths for GitHub Pages if needed
@@ -98,12 +108,12 @@ export default function BlogPostClient({ post }: { post: BlogPost }) {
         
         <article className="max-w-4xl mx-auto bg-zinc-900 rounded-lg overflow-hidden shadow-lg">
           {imagePath && isLoaded && (
-            <div className="relative h-64 md:h-96 w-full">
+            <div className={`relative ${isPortrait ? 'h-[32rem] md:h-[40rem] max-w-md mx-auto' : 'h-64 md:h-96 w-full'}`}>
               <Image
                 src={imagePath}
                 alt={post.title}
                 fill
-                className="object-cover"
+                className={`${isPortrait ? 'object-contain' : 'object-cover'}`}
                 unoptimized
               />
             </div>

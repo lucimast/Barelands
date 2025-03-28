@@ -71,12 +71,6 @@ export default function Footer() {
             <Link href="/terms" className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors">
               Terms of Service
             </Link>
-            <Link
-              href="/admin"
-              className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors flex items-center"
-            >
-              <FiLock className="mr-1 h-3 w-3" /> Admin
-            </Link>
           </div>
         </div>
       </div>

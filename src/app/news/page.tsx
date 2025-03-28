@@ -238,6 +238,7 @@ function RecentPhotoCard({ photo }: { photo: Photo }) {
 function BlogPostCard({ post }: { post: BlogPost }) {
   const [imagePath, setImagePath] = useState<string>(post.coverImage);
   const [imageError, setImageError] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
   
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -252,6 +253,13 @@ function BlogPostCard({ post }: { post: BlogPost }) {
       console.log(`BlogPostCard: Setting GitHub Pages path: ${fixedPath}`);
       setImagePath(fixedPath);
     }
+    
+    // Check if image is portrait
+    const img = document.createElement('img');
+    img.onload = () => {
+      setIsPortrait(img.height > img.width);
+    };
+    img.src = post.coverImage;
   }, [post.coverImage]);
   
   // Handle image error
@@ -262,7 +270,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className="relative aspect-video rounded-lg overflow-hidden">
+      <div className={`relative rounded-lg overflow-hidden ${isPortrait ? 'aspect-[3/4]' : 'aspect-video'}`}>
         {imageError ? (
           <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
             <p className="text-zinc-500">Image unavailable</p>
@@ -272,7 +280,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
             src={imagePath}
             alt={post.title}
             fill
-            className="object-cover"
+            className={`${isPortrait ? 'object-contain' : 'object-cover'}`}
             onError={handleImageError}
             unoptimized
           />
