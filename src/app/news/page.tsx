@@ -131,8 +131,11 @@ export default function NewsPage() {
   useEffect(() => {
     const fetchBlogPosts = async () => {
       try {
-        let posts: BlogPost[] = [];
+        // Set empty array to hide the placeholder blog posts
+        const posts: BlogPost[] = [];
         
+        // Previous code commented out
+        /*
         // Check if we're in static export mode
         if (isStatic) {
           console.log("News page: Using static blog data");
@@ -147,8 +150,9 @@ export default function NewsPage() {
         const sortedPosts = posts.sort((a, b) => {
           return new Date(b.date).getTime() - new Date(a.date).getTime();
         });
+        */
         
-        setBlogPosts(sortedPosts);
+        setBlogPosts(posts);
       } catch (error) {
         console.error('Error fetching blog posts:', error);
       }
