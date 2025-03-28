@@ -25,7 +25,7 @@ export const photoCategories = ["All", "Mountains", "Deserts", "Forests", "Ocean
 
 // Photos imported from the user's local collection
 export const photos: Photo[] = [
-  {
+{
     "id": "4c5239b2-a9be-4bca-9f06-840dbd6fc05e",
     "title": "Cuernos Del Paine Beach",
     "category": "Mountains",
@@ -114,7 +114,17 @@ export const photos: Photo[] = [
     "location": "Vareid Beach, Lofoten",
     "featured": true,
     "dateAdded": "2025-03-28T10:58:20.591Z"
-  }
+  },
+  {
+  id: "1743160172658",
+  title: "Magical Lanterns",
+  category: "Forests",
+  image: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743159530/landscape-photos/jvzzjjljzs57gqpre1yo.jpg",
+  description: "Just outside one of Nara's main temples",
+  location: "Nara, Japan",
+  featured: false,
+  dateAdded: "2025-03-28T11:09:32.658Z"
+}
 ];
 
 export type AboutInfo = {
