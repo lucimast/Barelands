@@ -72,7 +72,7 @@ export const photos: Photo[] = [
     "image": "/uploads/c1fb53d7-542f-460e-9627-ca1a4ef9f754.jpg",
     "description": "A beautiful sunset over the ancient city",
     "location": "Matera, Italy",
-    "featured": false,
+    "featured": true,
     "dateAdded": "2025-03-20T09:56:24.785Z"
   },
   {
