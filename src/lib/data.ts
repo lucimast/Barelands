@@ -134,6 +134,16 @@ export const photos: Photo[] = [
   location: "Zermatt, Switzerland",
   featured: true,
   dateAdded: "2025-03-28T11:12:09.322Z"
+},
+  {
+  id: "1743343660505",
+  title: "Shizukana Yuhi",
+  category: "Travel",
+  image: "https://res.cloudinary.com/dnafz7ugo/image/upload/v1743343193/landscape-photos/wxtxubo0s9xd9q466wgr.png",
+  description: "I took this picture at sunset during my last trip to Japan at the end of 2024. Shizukana Yuhi means tranquil sunset in Japanese. And this photo could not be named otherwise as I arrived at the temple 15 minutes before it closed and I was almost alone there. The temple itself is quite modern and some of its structures remind those of older and more famous ones, especially in Nikko. Anyway, such a nice scene with all the carps and the red temple gate in the background...",
+  location: "Kousan-Ji Temple, Inland Sea, Japan",
+  featured: true,
+  dateAdded: "2025-03-30T14:07:40.505Z"
 }
 ];
 
